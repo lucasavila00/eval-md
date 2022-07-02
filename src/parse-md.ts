@@ -142,7 +142,7 @@ export const FencedCodeBlockP = pipe(
 const FenceOpenerLA = P.lookAhead(FenceOpenerP);
 
 export const OtherMarkdownP = pipe(
-    P.many1Till(
+    P.manyTill(
         P.item<string>(),
         P.either(
             pipe(
@@ -153,7 +153,7 @@ export const OtherMarkdownP = pipe(
         )
     ),
     P.map((it) => it.join("")),
-    P.map(OtherMarkdown)
+    P.map((it) => (it.length > 0 ? O.some(OtherMarkdown(it)) : O.none))
 );
 
 export const parser: P.Parser<string, MarkdownAST> = pipe(
@@ -162,15 +162,16 @@ export const parser: P.Parser<string, MarkdownAST> = pipe(
     P.bind("code", () => P.optional(FencedCodeBlockP)),
     (it) => P.many1Till(it, P.eof()),
     P.map(
-        RA.map((ctt) =>
-            pipe(
-                ctt.code,
-                O.fold(
-                    () => [ctt.md],
-                    (it) => [ctt.md, it]
-                )
-            )
-        )
+        RA.map((ctt) => {
+            const arr: (OtherMarkdown | FencedCodeBlock)[] = [];
+            if (O.isSome(ctt.md)) {
+                arr.push(ctt.md.value);
+            }
+            if (O.isSome(ctt.code)) {
+                arr.push(ctt.code.value);
+            }
+            return arr;
+        })
     ),
     P.map(RA.flatten)
 );

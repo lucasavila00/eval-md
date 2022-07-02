@@ -1,44 +1,59 @@
 import { OtherMarkdownP } from "../../src/parse-md";
-import { runLeft, runRight } from "./utils";
+import { runRight } from "./utils";
 
 const run = runRight(OtherMarkdownP);
-const fail = runLeft(OtherMarkdownP);
 
+const str0 = "";
 it("empty string", () => {
-    expect(fail("")).toMatchInlineSnapshot(`
+    expect(run(str0).value).toMatchInlineSnapshot(`
         Object {
-          "expected": Array [],
-          "fatal": false,
-          "input": Object {
-            "buffer": Array [],
-            "cursor": 0,
-          },
+          "_tag": "None",
         }
     `);
 });
 
 const str1 = "a";
 it("str1", () => {
-    expect(run(str1).value.content).toMatchInlineSnapshot(`"a"`);
+    expect(run(str1).value).toMatchInlineSnapshot(`
+        Object {
+          "_tag": "Some",
+          "value": Object {
+            "_tag": "OtherMarkdown",
+            "content": "a",
+          },
+        }
+    `);
 });
 
 const str2 = `
 
 `;
 it("str2", () => {
-    expect(run(str2).value.content).toMatchInlineSnapshot(`
-        "
+    expect(run(str2).value).toMatchInlineSnapshot(`
+        Object {
+          "_tag": "Some",
+          "value": Object {
+            "_tag": "OtherMarkdown",
+            "content": "
 
-        "
+        ",
+          },
+        }
     `);
 });
 
 const str3 = `# h1
 `;
 it("str3", () => {
-    expect(run(str3).value.content).toMatchInlineSnapshot(`
-        "# h1
-        "
+    expect(run(str3).value).toMatchInlineSnapshot(`
+        Object {
+          "_tag": "Some",
+          "value": Object {
+            "_tag": "OtherMarkdown",
+            "content": "# h1
+        ",
+          },
+        }
     `);
 });
 
@@ -50,8 +65,28 @@ abc
 y
 `;
 it("str4", () => {
-    expect(run(str4).value.content).toMatchInlineSnapshot(`
-        "# h1
-        x"
+    expect(run(str4).value).toMatchInlineSnapshot(`
+        Object {
+          "_tag": "Some",
+          "value": Object {
+            "_tag": "OtherMarkdown",
+            "content": "# h1
+        x",
+          },
+        }
+    `);
+});
+
+const str5 = `
+~~~
+abc
+~~~
+y
+`;
+it("str5", () => {
+    expect(run(str5).value).toMatchInlineSnapshot(`
+        Object {
+          "_tag": "None",
+        }
     `);
 });

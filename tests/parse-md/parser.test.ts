@@ -1,9 +1,6 @@
 import snapshotDiff from "snapshot-diff";
-import { parser, printMarkdown, parseMarkdown } from "../../src/parse-md";
+import { printMarkdown, parseMarkdown } from "../../src/parse-md";
 import { assertIsRight } from "../utils";
-import { runLeft } from "./utils";
-
-const fail = runLeft(parser);
 
 const reprint = (str: string) => {
     const r = parseMarkdown(str);
@@ -11,8 +8,9 @@ const reprint = (str: string) => {
     return printMarkdown(r.right.value);
 };
 
-it("fails", () => {
-    expect(fail("") != null).toBe(true);
+const empty = ``;
+it("empty", () => {
+    expect(reprint(empty)).toBe(empty);
 });
 
 const codeBlock0 = ` `;

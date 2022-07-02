@@ -9,19 +9,28 @@ it("works", async () => {
     expect(r.right.value).toMatchInlineSnapshot(`
         Array [
           Object {
+            "_tag": "FencedCodeBlock",
+            "content": "const add1 = (it: number) => it + 1;",
+            "opener": Object {
+              "_tag": "FenceOpener",
+              "infoString": "ts eval",
+              "precedingSpaces": Object {
+                "_tag": "None",
+              },
+              "ticks": "\`\`\`",
+            },
+          },
+          Object {
             "_tag": "OtherMarkdown",
             "content": "
-        \`\`\`ts eval
-        const add1 = (it: number) => it + 1;",
+        ",
           },
           Object {
             "_tag": "FencedCodeBlock",
-            "content": "
-        \`\`\`ts eval --yield=json
-        yield add1(3);",
+            "content": "yield add1(3);",
             "opener": Object {
               "_tag": "FenceOpener",
-              "infoString": "",
+              "infoString": "ts eval --yield=json",
               "precedingSpaces": Object {
                 "_tag": "None",
               },

@@ -15,6 +15,7 @@ import * as TE from "fp-ts/TaskEither";
 import { MarkdownAST } from "../md-types";
 import { parseMarkdown } from "../parse-md";
 import { defaultLanguageCompilers } from "../lang-compilers";
+import { compileOneFile } from "../compile";
 // import * as E from 'fp-ts/Either'
 
 const CONFIG_FILE_NAME = "eval-md.json";
@@ -191,10 +192,15 @@ const parseFiles = (
         ),
         RTE.chain(() => parseMdFiles(files))
     );
-const executeFiles = (modules: ReadonlyArray<MarkdownAST>): Program<void> => {
-    console.error(modules);
-    return hole();
-};
+const executeFiles = (modules: ReadonlyArray<MarkdownAST>): Program<void> =>
+    pipe(
+        modules,
+        RTE.traverseArray(compileOneFile),
+        RTE.map((it) => {
+            console.error(it);
+            return void 0;
+        })
+    );
 
 const getMarkdownFiles = (
     _modules: ReadonlyArray<MarkdownAST>

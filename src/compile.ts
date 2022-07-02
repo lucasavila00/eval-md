@@ -53,12 +53,18 @@ const runOneCompiler = (
 ): Program<O.Option<CompiledAST>> =>
     pipe(
         filterLanguageBlocks(ast, comp),
-        RTE.chain((blocks) => tryCatchCompiler(blocks, comp)),
-        RTE.map(
-            O.map((it) => ({
-                code: it,
-                language: comp.language,
-            }))
+        RTE.chain((blocks) =>
+            blocks.length === 0
+                ? RTE.of(O.none)
+                : pipe(
+                      tryCatchCompiler(blocks, comp),
+                      RTE.map(
+                          O.map((it) => ({
+                              code: it,
+                              language: comp.language,
+                          }))
+                      )
+                  )
         )
     );
 
@@ -69,11 +75,9 @@ export const compileOneFile = (
         getCompilers(),
         RTE.chain(RTE.traverseArray((comp) => runOneCompiler(ast, comp))),
         RTE.map((it) =>
-            it.reduce((p, c) => {
-                if (O.isSome(c)) {
-                    return [...p, c.value];
-                }
-                return p;
-            }, [] as readonly CompiledAST[])
+            it.reduce(
+                (p, c) => (O.isSome(c) ? [...p, c.value] : p),
+                [] as readonly CompiledAST[]
+            )
         )
     );
