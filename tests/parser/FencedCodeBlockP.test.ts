@@ -1,5 +1,5 @@
 import { FencedCodeBlockP } from "../../src/parse-md";
-import { runLeft, runRight } from "../utils";
+import { runLeft, runRight } from "./utils";
 
 const run = runRight(FencedCodeBlockP);
 const fail = runLeft(FencedCodeBlockP);
@@ -144,8 +144,6 @@ it("example97", () => {
     `);
 });
 
-// TODO 98 (maybe never? should we parse blocks? and print in the blocks? Should this parser be at this level?)
-
 const example99 = `
 ~~~
 
@@ -260,9 +258,6 @@ it("example109", () => {
     `);
 });
 
-// TODO 110 (not code)
-// TODO 111 (not code)
-
 const example112 = `
 ~~~ruby
 def foo(x)
@@ -275,7 +270,9 @@ it("example112", () => {
           return 3
         end"
     `);
-    expect(run(example112).value.infoString).toMatchInlineSnapshot(`"ruby"`);
+    expect(run(example112).value.opener.infoString).toMatchInlineSnapshot(
+        `"ruby"`
+    );
 });
 
 const example113 = `
@@ -290,7 +287,7 @@ it("example113", () => {
           return 3
         end"
     `);
-    expect(run(example113).value.infoString).toMatchInlineSnapshot(
+    expect(run(example113).value.opener.infoString).toMatchInlineSnapshot(
         `"    ruby startline=3 $%@#$"`
     );
 });
@@ -300,7 +297,9 @@ const example114 = `
 ~~~~`;
 it("example114", () => {
     expect(run(example114).value.content).toMatchInlineSnapshot(`""`);
-    expect(run(example114).value.infoString).toMatchInlineSnapshot(`";"`);
+    expect(run(example114).value.opener.infoString).toMatchInlineSnapshot(
+        `";"`
+    );
 });
 
 const example115 = `
@@ -317,7 +316,7 @@ foo
 `;
 it("example116", () => {
     expect(run(example116).value.content).toMatchInlineSnapshot(`"foo"`);
-    expect(run(example116).value.infoString).toMatchInlineSnapshot(
+    expect(run(example116).value.opener.infoString).toMatchInlineSnapshot(
         `" aa \`\`\` ~~~"`
     );
 });

@@ -9,29 +9,46 @@ const StringEOF = pipe(
     P.map((_it) => "")
 );
 
-export type ValidMarkdown = {
-    _tag: "ValidMarkdown";
+export type OtherMarkdown = {
+    _tag: "OtherMarkdown";
     content: string;
 };
 
-export const ValidMarkdown = (content: string): ValidMarkdown => ({
-    _tag: "ValidMarkdown",
+export const OtherMarkdown = (content: string): OtherMarkdown => ({
+    _tag: "OtherMarkdown",
     content,
+});
+
+export type FenceOpenerT = {
+    _tag: "FenceOpenerT";
+    ticks: string;
+    infoString: string;
+    precedingSpaces: Option<string>;
+};
+export const FenceOpenerT = (
+    ticks: string,
+    meta: string,
+    precedingSpaces: Option<string>
+): FenceOpenerT => ({
+    _tag: "FenceOpenerT",
+    ticks,
+    infoString: meta,
+    precedingSpaces,
 });
 
 export type FencedCodeBlock = {
     _tag: "FencedCodeBlock";
     content: string;
-    infoString: string;
+    opener: FenceOpenerT;
 };
 
 export const FencedCodeBlock = (
     content: string,
-    meta: string
+    opener: FenceOpenerT
 ): FencedCodeBlock => ({
     _tag: "FencedCodeBlock",
     content,
-    infoString: meta,
+    opener,
 });
 
 const PrecedingFenceSpaces = pipe(
@@ -45,23 +62,6 @@ const PrecedingFenceSpaces = pipe(
         )
     )
 );
-
-type FenceOpenerT = {
-    _tag: "FenceOpenerT";
-    ticks: string;
-    meta: string;
-    precedingSpaces: Option<string>;
-};
-const FenceOpenerT = (
-    ticks: string,
-    meta: string,
-    precedingSpaces: Option<string>
-): FenceOpenerT => ({
-    _tag: "FenceOpenerT",
-    ticks,
-    meta,
-    precedingSpaces,
-});
 
 const nChars = (it: number, char: string): string => {
     let acc = "";
@@ -113,7 +113,6 @@ const FenceCloser = (openerTicks: string) =>
         P.chain(() => P.lookAhead(P.either(S.string("\n"), () => StringEOF)))
     );
 
-// const FenceOpenerLA = P.lookAhead(FenceOpener);
 const FenceCloserLA = flow(FenceCloser, P.lookAhead);
 
 const precedingSpacesOf = (it: string): number => {
@@ -170,22 +169,30 @@ export const FencedCodeBlockP = pipe(
             // this is not part of the content
             .replace("\n", "");
 
-        return FencedCodeBlock(content, it.opener.meta);
+        return FencedCodeBlock(content, it.opener);
     })
 );
 
-// export const ValidMarkdownParser = pipe(
-//     P.many1Till(
-//         P.item<string>(),
-//         P.either(pipe(FenceOpenerLA), () => StringEOF)
-//     ),
-//     P.map((it) => it.join("")),
-//     P.map(ValidMarkdown)
-// );
+const FenceOpenerLA = P.lookAhead(FenceOpener);
 
-// export const parser = pipe(
-//     ValidMarkdownParser,
-//     P.bindTo("md"),
-//     P.bind("code", () => P.optional(Code)),
-//     (it) => P.many1Till(it, P.eof())
-// );
+export const OtherMarkdownP = pipe(
+    P.many1Till(
+        P.item<string>(),
+        P.either(
+            pipe(
+                FenceOpenerLA,
+                P.map((_) => "")
+            ),
+            () => StringEOF
+        )
+    ),
+    P.map((it) => it.join("")),
+    P.map(OtherMarkdown)
+);
+
+export const parser = pipe(
+    OtherMarkdownP,
+    P.bindTo("md"),
+    P.bind("code", () => P.optional(FencedCodeBlockP)),
+    (it) => P.many1Till(it, P.eof())
+);
