@@ -1,14 +1,14 @@
 import { pipe } from "fp-ts/lib/function";
 import { FencedCodeBlock, MarkdownAST } from "./md-types";
-import { EvalRTE, LanguageCompiler } from "./types";
+import { LanguageCompiler, Program } from "./types";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as A from "fp-ts/lib/Array";
 import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as O from "fp-ts/lib/Option";
 import { getInfoStringLanguage } from "./parse-info-string";
 
-const getCompilers = (): EvalRTE<LanguageCompiler[]> => (deps) =>
-    TE.of(deps.languageCompilers);
+const getCompilers = (): Program<LanguageCompiler[]> => (deps) =>
+    TE.of(deps.settings.languageCompilers);
 
 const fencedCodeBlocksFromAST = (ast: MarkdownAST): FencedCodeBlock[] =>
     ast.filter((it) => it._tag === "FencedCodeBlock") as FencedCodeBlock[];
@@ -16,7 +16,7 @@ const fencedCodeBlocksFromAST = (ast: MarkdownAST): FencedCodeBlock[] =>
 const filterLanguageBlocks = (
     ast: MarkdownAST,
     comp: LanguageCompiler
-): EvalRTE<FencedCodeBlock[]> =>
+): Program<FencedCodeBlock[]> =>
     pipe(
         fencedCodeBlocksFromAST(ast),
         A.filter((it) =>
@@ -35,7 +35,7 @@ const tryCatchCompiler =
     (
         blocks: FencedCodeBlock[],
         comp: LanguageCompiler
-    ): EvalRTE<O.Option<string>> =>
+    ): Program<O.Option<string>> =>
     (_deps) =>
         TE.tryCatch(
             () => comp.compileToExecutable(blocks),
@@ -50,7 +50,7 @@ type CompiledAST = {
 const runOneCompiler = (
     ast: MarkdownAST,
     comp: LanguageCompiler
-): EvalRTE<O.Option<CompiledAST>> =>
+): Program<O.Option<CompiledAST>> =>
     pipe(
         filterLanguageBlocks(ast, comp),
         RTE.chain((blocks) => tryCatchCompiler(blocks, comp)),
@@ -64,7 +64,7 @@ const runOneCompiler = (
 
 export const compileOneFile = (
     ast: MarkdownAST
-): EvalRTE<readonly CompiledAST[]> =>
+): Program<readonly CompiledAST[]> =>
     pipe(
         getCompilers(),
         RTE.chain(RTE.traverseArray((comp) => runOneCompiler(ast, comp))),

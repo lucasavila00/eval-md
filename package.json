@@ -5,8 +5,8 @@
     "main": "index.js",
     "scripts": {
         "test": "jest",
-        "exec": "ts-node --transpileOnly src/parse-md.ts",
-        "mon": "nodemon --watch ./src --exec \"ts-node\" --transpileOnly ./src/parse-md.ts"
+        "exec": "ts-node --transpileOnly src/bin.ts",
+        "mon": "nodemon --watch ./src --exec \"ts-node\" --transpileOnly ./src/bin.ts"
     },
     "keywords": [],
     "author": "",

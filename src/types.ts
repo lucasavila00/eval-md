@@ -17,13 +17,19 @@ export type Settings = {
     readonly srcDir: string;
     readonly outDir: string;
     readonly exclude: ReadonlyArray<string>;
+    readonly languageCompilers: LanguageCompiler[];
 };
 
-export type EvalReads = {
-    readonly languageCompilers: LanguageCompiler[];
+export type Capabilities = {
     readonly fileSystem: FileSystem;
     readonly logger: Logger;
+    // readonly settings: Settings;
+};
+
+export type Effect<A> = RTE.ReaderTaskEither<Capabilities, TransportedError, A>;
+
+export type Environment = Capabilities & {
     readonly settings: Settings;
 };
 
-export type EvalRTE<A> = RTE.ReaderTaskEither<EvalReads, TransportedError, A>;
+export type Program<A> = RTE.ReaderTaskEither<Environment, TransportedError, A>;

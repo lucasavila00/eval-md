@@ -192,6 +192,23 @@ it("codeBlock12", () => {
         Compared values have no visual difference."
     `);
 });
+const codeBlock13 = `
+~~~ts eval
+const add1 = (it: number) => it + 1;
+~~~
+
+~~~ts eval --yield=json
+yield add1(3);
+~~~
+`;
+it("codeBlock13", () => {
+    expect(snapshotDiff(codeBlock13, reprint(codeBlock13)))
+        .toMatchInlineSnapshot(`
+        "Snapshot Diff:
+        Compared values have no visual difference."
+    `);
+});
+
 const example110 = `foo
 ~~~
 bar
