@@ -15,7 +15,7 @@ import * as TE from "fp-ts/TaskEither";
 import { MarkdownAST } from "../md-types";
 import { parseMarkdown } from "../parse-md";
 import { defaultLanguageCompilers } from "../lang-compilers";
-import { compileOneFile } from "../compile";
+import { CompiledAST, compileOneAst } from "../compile";
 // import * as E from 'fp-ts/Either'
 
 const CONFIG_FILE_NAME = "eval-md.json";
@@ -70,7 +70,6 @@ const writeFiles: (files: ReadonlyArray<File>) => Effect<void> = flow(
     RA.traverse(RTE.ApplicativePar)(writeFile),
     RTE.map(constVoid)
 );
-console.error("use", writeFiles);
 
 const readSourcePaths: Program<ReadonlyArray<string>> = pipe(
     RTE.ask<Environment, string>(),
@@ -170,21 +169,36 @@ const getConfiguration = (): Effect<Settings> =>
                 : useDefaultSettings(defaultSettings)
         )
     );
+type AstAndFile = {
+    ast: MarkdownAST;
+    file: File;
+};
 
+type CompiledAstAndFile = {
+    compiledAsts: readonly CompiledAST[];
+    file: File;
+};
 const parseMdFiles = (
     files: ReadonlyArray<File>
-): Program<ReadonlyArray<MarkdownAST>> =>
+): Program<ReadonlyArray<AstAndFile>> =>
     pipe(
         files,
-        RTE.traverseArray(
-            (f) => (_deps) => async () => parseMarkdown(f.content)
+        RTE.traverseArray((f) =>
+            pipe(
+                RTE.of(f),
+                RTE.bindTo("file"),
+                RTE.bind(
+                    "ast",
+                    (_acc) => (_deps) => async () => parseMarkdown(f.content)
+                )
+            )
         ),
-        RTE.map(RA.map((it) => it.value))
+        RTE.map(RA.map((it) => ({ ast: it.ast.value, file: it.file })))
     );
 
 const parseFiles = (
     files: ReadonlyArray<File>
-): Program<ReadonlyArray<MarkdownAST>> =>
+): Program<ReadonlyArray<AstAndFile>> =>
     pipe(
         RTE.ask<Environment, string>(),
         RTE.chainFirst(({ logger }) =>
@@ -192,18 +206,56 @@ const parseFiles = (
         ),
         RTE.chain(() => parseMdFiles(files))
     );
-const executeFiles = (modules: ReadonlyArray<MarkdownAST>): Program<void> =>
+
+const getExecutableFiles = (
+    _compiledFiles: ReadonlyArray<CompiledAstAndFile>
+): Program<ReadonlyArray<File>> => {
+    const content = "...";
+    return pipe(
+        RTE.ask<Environment, string>(),
+        RTE.map((env) =>
+            File(
+                path.join(env.settings.outDir, "examples", "index.ts"),
+                `${content}\n`,
+                true
+            )
+        ),
+        RTE.map((it) => [it])
+    );
+};
+
+const writeExecutableFiles = (
+    compiledFiles: ReadonlyArray<CompiledAstAndFile>
+): Program<void> =>
+    pipe(
+        RTE.ask<Environment, TransportedError>(),
+        RTE.chainFirst(({ logger }) =>
+            RTE.fromTaskEither(logger.debug("Writing examples..."))
+        ),
+        RTE.chain((C) =>
+            pipe(
+                getExecutableFiles(compiledFiles),
+                RTE.chainTaskEitherK((files) => pipe(C, writeFiles(files)))
+            )
+        )
+    );
+
+const executeFiles = (modules: ReadonlyArray<AstAndFile>): Program<void> =>
     pipe(
         modules,
-        RTE.traverseArray(compileOneFile),
-        RTE.map((it) => {
-            console.error(it);
-            return void 0;
-        })
+        RTE.traverseArray((it) =>
+            pipe(
+                //
+                compileOneAst(it.ast),
+                RTE.bindTo("compiledAsts"),
+                RTE.bind("file", () => RTE.of(it.file))
+            )
+        ),
+        RTE.chain(writeExecutableFiles)
     );
 
 const getMarkdownFiles = (
-    _modules: ReadonlyArray<MarkdownAST>
+    _modules: ReadonlyArray<AstAndFile>
 ): Program<ReadonlyArray<File>> => hole();
 
 const writeMarkdownFiles = (_files: ReadonlyArray<File>): Program<void> =>

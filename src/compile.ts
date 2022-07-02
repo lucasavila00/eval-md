@@ -42,7 +42,7 @@ const tryCatchCompiler =
             (e) => e
         );
 
-type CompiledAST = {
+export type CompiledAST = {
     language: string;
     code: string;
 };
@@ -68,7 +68,7 @@ const runOneCompiler = (
         )
     );
 
-export const compileOneFile = (
+export const compileOneAst = (
     ast: MarkdownAST
 ): Program<readonly CompiledAST[]> =>
     pipe(

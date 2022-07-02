@@ -1,4 +1,4 @@
-import { compileOneFile } from "../../src/compile";
+import { compileOneAst } from "../../src/compile";
 import { parseMarkdown } from "../../src/parse-md";
 import { Environment } from "../../src/types";
 import { assertIsRight } from "../utils";
@@ -21,7 +21,7 @@ it("str1", async () => {
             ],
         } as any,
     });
-    const op = await compileOneFile(ast.right.value)(deps)();
+    const op = await compileOneAst(ast.right.value)(deps)();
     assertIsRight(op);
     expect(op.right).toMatchInlineSnapshot(`
         Array [
@@ -57,7 +57,7 @@ it("str2", async () => {
             ],
         } as any,
     });
-    const op = await compileOneFile(ast.right.value)(deps)();
+    const op = await compileOneAst(ast.right.value)(deps)();
     assertIsRight(op);
     expect(op.right).toMatchInlineSnapshot(`
         Array [
