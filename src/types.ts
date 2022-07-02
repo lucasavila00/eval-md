@@ -1,8 +1,10 @@
 import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as O from "fp-ts/lib/Option";
 import { FencedCodeBlock } from "./md-types";
+import { FileSystem } from "./program/FileSystem";
+import { Logger } from "./program/Logger";
 
-type TransportedError = any;
+export type TransportedError = any;
 
 export type LanguageCompiler = {
     language: string;
@@ -10,8 +12,18 @@ export type LanguageCompiler = {
         blocks: FencedCodeBlock[]
     ) => Promise<O.Option<string>>;
 };
-type Reads = {
-    languageCompilers: LanguageCompiler[];
+
+export type Settings = {
+    readonly srcDir: string;
+    readonly outDir: string;
+    readonly exclude: ReadonlyArray<string>;
 };
 
-export type EvalRTE<A> = RTE.ReaderTaskEither<Reads, TransportedError, A>;
+export type EvalReads = {
+    readonly languageCompilers: LanguageCompiler[];
+    readonly fileSystem: FileSystem;
+    readonly logger: Logger;
+    readonly settings: Settings;
+};
+
+export type EvalRTE<A> = RTE.ReaderTaskEither<EvalReads, TransportedError, A>;

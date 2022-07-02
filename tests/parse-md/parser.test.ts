@@ -179,6 +179,19 @@ it("codeBlock11", () => {
         + ~~~"
     `);
 });
+const codeBlock12 = `~~~ts
+abc
+~~~
+~~~js
+def
+~~~`;
+it("codeBlock12", () => {
+    expect(snapshotDiff(codeBlock12, reprint(codeBlock12)))
+        .toMatchInlineSnapshot(`
+        "Snapshot Diff:
+        Compared values have no visual difference."
+    `);
+});
 const example110 = `foo
 ~~~
 bar

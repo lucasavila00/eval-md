@@ -4,8 +4,6 @@ export type OtherMarkdown = {
     content: string;
 };
 
-console.error("implement info string parser");
-
 export type FenceOpener = {
     _tag: "FenceOpener";
     ticks: string;

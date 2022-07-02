@@ -5,23 +5,10 @@ import * as TE from "fp-ts/lib/TaskEither";
 import * as A from "fp-ts/lib/Array";
 import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as O from "fp-ts/lib/Option";
-import { defaultLanguageCompilers } from "./lang-compilers";
+import { getInfoStringLanguage } from "./parse-info-string";
 
-const getCompilers = (): EvalRTE<LanguageCompiler[]> => (deps) => {
-    const compilers: Record<string, LanguageCompiler> = {};
-    for (const compiler of defaultLanguageCompilers) {
-        compilers[compiler.language] = compiler;
-    }
-    for (const compiler of deps.languageCompilers) {
-        compilers[compiler.language] = compiler;
-    }
-    return TE.of(Object.values(compilers));
-};
-
-type CompiledAST = {
-    language: string;
-    code: string;
-};
+const getCompilers = (): EvalRTE<LanguageCompiler[]> => (deps) =>
+    TE.of(deps.languageCompilers);
 
 const fencedCodeBlocksFromAST = (ast: MarkdownAST): FencedCodeBlock[] =>
     ast.filter((it) => it._tag === "FencedCodeBlock") as FencedCodeBlock[];
@@ -29,39 +16,58 @@ const fencedCodeBlocksFromAST = (ast: MarkdownAST): FencedCodeBlock[] =>
 const filterLanguageBlocks = (
     ast: MarkdownAST,
     comp: LanguageCompiler
-): FencedCodeBlock[] =>
+): EvalRTE<FencedCodeBlock[]> =>
     pipe(
         fencedCodeBlocksFromAST(ast),
-        A.filter((it) => it.opener.infoString.includes(comp.language))
+        A.filter((it) =>
+            pipe(
+                getInfoStringLanguage(it.opener.infoString),
+                O.fold(
+                    () => false,
+                    (it) => it === comp.language
+                )
+            )
+        ),
+        RTE.of
     );
 
-const compileOneFile =
+const tryCatchCompiler =
     (
-        ast: MarkdownAST,
+        blocks: FencedCodeBlock[],
         comp: LanguageCompiler
-    ): EvalRTE<O.Option<CompiledAST>> =>
+    ): EvalRTE<O.Option<string>> =>
     (_deps) =>
-        pipe(
-            filterLanguageBlocks(ast, comp),
-            (blocks) =>
-                TE.tryCatch(
-                    () => comp.compileToExecutable(blocks),
-                    (e) => e
-                ),
-            TE.map(
-                O.map((it) => ({
-                    code: it,
-                    language: comp.language,
-                }))
-            )
+        TE.tryCatch(
+            () => comp.compileToExecutable(blocks),
+            (e) => e
         );
 
-export const compileFile = (
+type CompiledAST = {
+    language: string;
+    code: string;
+};
+
+const runOneCompiler = (
+    ast: MarkdownAST,
+    comp: LanguageCompiler
+): EvalRTE<O.Option<CompiledAST>> =>
+    pipe(
+        filterLanguageBlocks(ast, comp),
+        RTE.chain((blocks) => tryCatchCompiler(blocks, comp)),
+        RTE.map(
+            O.map((it) => ({
+                code: it,
+                language: comp.language,
+            }))
+        )
+    );
+
+export const compileOneFile = (
     ast: MarkdownAST
 ): EvalRTE<readonly CompiledAST[]> =>
     pipe(
         getCompilers(),
-        RTE.chain(RTE.traverseArray((comp) => compileOneFile(ast, comp))),
+        RTE.chain(RTE.traverseArray((comp) => runOneCompiler(ast, comp))),
         RTE.map((it) =>
             it.reduce((p, c) => {
                 if (O.isSome(c)) {

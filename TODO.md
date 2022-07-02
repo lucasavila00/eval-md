@@ -1,6 +1,0 @@
--   [ ] read files
--          [ ] given a list of files...
--          [ ] given a list of file contents...
--   [x] parse
--   [ ] compile
--   [ ] execute

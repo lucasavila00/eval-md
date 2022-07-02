@@ -108,7 +108,7 @@ export const FencedCodeBlockP = pipe(
     P.map((it) => {
         const content = it.content
             .join("")
-            // remove opener identation
+            // remove opener indentation
             .split("\n")
             .map((line) => {
                 if (O.isSome(it.opener.precedingSpaces)) {
@@ -175,7 +175,7 @@ export const parser: P.Parser<string, MarkdownAST> = pipe(
     P.map(RA.flatten)
 );
 
-// add \n in the beginning to make codes parseable
+// add \n in the beginning to make codes able to parse
 export const parseMarkdown = (md: string): ParseResult<string, MarkdownAST> =>
     S.run("\n" + md)(parser);
 

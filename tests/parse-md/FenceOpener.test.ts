@@ -49,3 +49,38 @@ it("str3", () => {
         }
     `);
 });
+
+const str4 = `
+~~~ts
+~~~
+`;
+it("str4", () => {
+    expect(run(str4).value).toMatchInlineSnapshot(`
+        Object {
+          "_tag": "FenceOpener",
+          "infoString": "ts",
+          "precedingSpaces": Object {
+            "_tag": "None",
+          },
+          "ticks": "~~~",
+        }
+    `);
+});
+
+const str5 = `
+~~~ts x x
+abc
+~~~
+`;
+it("str5", () => {
+    expect(run(str5).value).toMatchInlineSnapshot(`
+        Object {
+          "_tag": "FenceOpener",
+          "infoString": "ts x x",
+          "precedingSpaces": Object {
+            "_tag": "None",
+          },
+          "ticks": "~~~",
+        }
+    `);
+});
