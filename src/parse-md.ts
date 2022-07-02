@@ -2,54 +2,20 @@ import * as C from "parser-ts/char";
 import * as S from "parser-ts/string";
 import * as P from "parser-ts/Parser";
 import { flow, pipe } from "fp-ts/lib/function";
-import { Option, isSome } from "fp-ts/lib/Option";
+import * as O from "fp-ts/lib/Option";
+import * as RA from "fp-ts/lib/ReadonlyArray";
+import {
+    MarkdownAST,
+    OtherMarkdown,
+    FencedCodeBlock,
+    FenceOpener,
+} from "./md-types";
+import { ParseResult } from "parser-ts/lib/ParseResult";
 
 const StringEOF = pipe(
     P.eof<string>(),
     P.map((_it) => "")
 );
-
-export type OtherMarkdown = {
-    _tag: "OtherMarkdown";
-    content: string;
-};
-
-export const OtherMarkdown = (content: string): OtherMarkdown => ({
-    _tag: "OtherMarkdown",
-    content,
-});
-
-export type FenceOpenerT = {
-    _tag: "FenceOpenerT";
-    ticks: string;
-    infoString: string;
-    precedingSpaces: Option<string>;
-};
-export const FenceOpenerT = (
-    ticks: string,
-    meta: string,
-    precedingSpaces: Option<string>
-): FenceOpenerT => ({
-    _tag: "FenceOpenerT",
-    ticks,
-    infoString: meta,
-    precedingSpaces,
-});
-
-export type FencedCodeBlock = {
-    _tag: "FencedCodeBlock";
-    content: string;
-    opener: FenceOpenerT;
-};
-
-export const FencedCodeBlock = (
-    content: string,
-    opener: FenceOpenerT
-): FencedCodeBlock => ({
-    _tag: "FencedCodeBlock",
-    content,
-    opener,
-});
 
 const PrecedingFenceSpaces = pipe(
     S.string("\n"),
@@ -93,10 +59,10 @@ const FenceOpenerBuilder = (char: string) =>
             )
         ),
         P.map((it) =>
-            FenceOpenerT(it.ticks, it.meta.join(""), it.precedingSpaces)
+            FenceOpener(it.ticks, it.meta.join(""), it.precedingSpaces)
         )
     );
-export const FenceOpener = P.either(FenceOpenerBuilder("~"), () =>
+export const FenceOpenerP = P.either(FenceOpenerBuilder("~"), () =>
     FenceOpenerBuilder("`")
 );
 
@@ -128,7 +94,7 @@ const precedingSpacesOf = (it: string): number => {
 };
 
 export const FencedCodeBlockP = pipe(
-    FenceOpener,
+    FenceOpenerP,
     P.bindTo("opener"),
     P.bind("content", (acc) =>
         P.manyTill(
@@ -145,7 +111,7 @@ export const FencedCodeBlockP = pipe(
             // remove opener identation
             .split("\n")
             .map((line) => {
-                if (isSome(it.opener.precedingSpaces)) {
+                if (O.isSome(it.opener.precedingSpaces)) {
                     if (
                         precedingSpacesOf(line) <
                         it.opener.precedingSpaces.value.length
@@ -173,7 +139,7 @@ export const FencedCodeBlockP = pipe(
     })
 );
 
-const FenceOpenerLA = P.lookAhead(FenceOpener);
+const FenceOpenerLA = P.lookAhead(FenceOpenerP);
 
 export const OtherMarkdownP = pipe(
     P.many1Till(
@@ -190,9 +156,53 @@ export const OtherMarkdownP = pipe(
     P.map(OtherMarkdown)
 );
 
-export const parser = pipe(
+export const parser: P.Parser<string, MarkdownAST> = pipe(
     OtherMarkdownP,
     P.bindTo("md"),
     P.bind("code", () => P.optional(FencedCodeBlockP)),
-    (it) => P.many1Till(it, P.eof())
+    (it) => P.many1Till(it, P.eof()),
+    P.map(
+        RA.map((ctt) =>
+            pipe(
+                ctt.code,
+                O.fold(
+                    () => [ctt.md],
+                    (it) => [ctt.md, it]
+                )
+            )
+        )
+    ),
+    P.map(RA.flatten)
 );
+
+// add \n in the beginning to make codes parseable
+export const parseMarkdown = (md: string): ParseResult<string, MarkdownAST> =>
+    S.run("\n" + md)(parser);
+
+export const printMarkdown = (it: MarkdownAST): string => {
+    let acc = "";
+    for (const i of it) {
+        switch (i._tag) {
+            case "FencedCodeBlock": {
+                acc += "\n";
+                acc += i.opener.ticks;
+                acc += i.opener.infoString;
+                acc += "\n";
+                acc += i.content;
+                acc += "\n";
+                acc += i.opener.ticks;
+                break;
+            }
+            case "OtherMarkdown": {
+                acc += i.content;
+                break;
+            }
+        }
+    }
+
+    // remove the \n that was added
+    if (acc.startsWith("\n")) {
+        acc = acc.slice(1);
+    }
+    return acc;
+};

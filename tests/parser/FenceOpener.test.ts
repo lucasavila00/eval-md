@@ -1,14 +1,14 @@
-import { FenceOpener } from "../../src/parse-md";
+import { FenceOpenerP } from "../../src/parse-md";
 import { runRight } from "./utils";
 
-const run = runRight(FenceOpener);
+const run = runRight(FenceOpenerP);
 
 const str1 = `
 ~~~`;
 it("str1", () => {
     expect(run(str1).value).toMatchInlineSnapshot(`
         Object {
-          "_tag": "FenceOpenerT",
+          "_tag": "FenceOpener",
           "infoString": "",
           "precedingSpaces": Object {
             "_tag": "None",
@@ -23,7 +23,7 @@ const str2 = `
 it("str2", () => {
     expect(run(str2).value).toMatchInlineSnapshot(`
         Object {
-          "_tag": "FenceOpenerT",
+          "_tag": "FenceOpener",
           "infoString": "",
           "precedingSpaces": Object {
             "_tag": "Some",
@@ -39,7 +39,7 @@ const str3 = `
 it("str3", () => {
     expect(run(str3).value).toMatchInlineSnapshot(`
         Object {
-          "_tag": "FenceOpenerT",
+          "_tag": "FenceOpener",
           "infoString": "",
           "precedingSpaces": Object {
             "_tag": "Some",

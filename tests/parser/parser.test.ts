@@ -1,34 +1,15 @@
-import { isSome, Option } from "fp-ts/lib/Option";
-import { ReadonlyNonEmptyArray } from "fp-ts/lib/ReadonlyNonEmptyArray";
-import { FencedCodeBlock, parser, OtherMarkdown } from "../../src/parse-md";
-import { runLeft, runRight } from "./utils";
 import snapshotDiff from "snapshot-diff";
+import { parser, printMarkdown, parseMarkdown } from "../../src/parse-md";
+import { assertIsRight } from "../utils";
+import { runLeft } from "./utils";
 
-const run = runRight(parser);
 const fail = runLeft(parser);
 
-const reprintResult = (
-    it: ReadonlyNonEmptyArray<{
-        md: OtherMarkdown;
-        code: Option<FencedCodeBlock>;
-    }>
-) => {
-    let acc = "";
-    for (const i of it) {
-        acc += i.md.content;
-        if (isSome(i.code)) {
-            acc += "\n";
-            acc += i.code.value.opener.ticks;
-            acc += i.code.value.opener.infoString;
-            acc += "\n";
-            acc += i.code.value.content;
-            acc += "\n";
-            acc += i.code.value.opener.ticks;
-        }
-    }
-    return acc;
+const reprint = (str: string) => {
+    const r = parseMarkdown(str);
+    assertIsRight(r);
+    return printMarkdown(r.right.value);
 };
-const reprint = (str: string) => reprintResult(run(str).value);
 
 it("fails", () => {
     expect(fail("") != null).toBe(true);
