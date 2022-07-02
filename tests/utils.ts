@@ -7,7 +7,7 @@ export const assertIsRight: <A>(
 ) => asserts val is E.Right<A> = (val) => {
     if (E.isLeft(val)) {
         // eslint-disable-next-line no-console
-        console.error(val);
+        console.error(JSON.stringify(val, null, 2));
         throw new Error(`Expected right, got left`);
     }
 };
@@ -17,7 +17,7 @@ export const assertIsLeft: <A>(
 ) => asserts val is E.Left<A> = (val) => {
     if (E.isRight(val)) {
         // eslint-disable-next-line no-console
-        console.error(val);
+        console.error(JSON.stringify(val, null, 2));
         throw new Error(`Expected left, got right`);
     }
 };

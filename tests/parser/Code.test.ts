@@ -134,3 +134,98 @@ const example100 = `
 it("example100", () => {
     expect(run(example100).value.content).toMatchInlineSnapshot(`""`);
 });
+
+const example101 = `
+ ~~~
+aaa
+aaa
+~~~`;
+it("example101", () => {
+    expect(run(example101).value.content).toMatchInlineSnapshot(`
+        "aaa
+        aaa"
+    `);
+});
+
+const example102 = `
+  ~~~
+aaa
+  aaa
+aaa
+  ~~~`;
+it("example102", () => {
+    expect(run(example102).value.content).toMatchInlineSnapshot(`
+        "aaa
+        aaa
+        aaa"
+    `);
+});
+
+const example103 = `
+   ~~~
+   aaa
+    aaa
+  aaa
+   ~~~`;
+it("example103", () => {
+    expect(run(example103).value.content).toMatchInlineSnapshot(`
+        "aaa
+         aaa
+        aaa"
+    `);
+});
+
+const example104 = `
+    ~~~
+    aaa
+    ~~~
+`;
+it("example104", () => {
+    expect(fail(example104) != null).toBe(true);
+});
+
+const example105 = `
+~~~
+aaa
+  ~~~`;
+it("example105", () => {
+    expect(run(example105).value.content).toMatchInlineSnapshot(`"aaa"`);
+});
+
+const example106 = `
+   ~~~
+aaa
+  ~~~`;
+it("example106", () => {
+    expect(run(example106).value.content).toMatchInlineSnapshot(`"aaa"`);
+});
+
+const example107 = `
+~~~
+aaa
+    ~~~`;
+it("example107", () => {
+    expect(run(example107).value.content).toMatchInlineSnapshot(`
+        "aaa
+            ~~~"
+    `);
+});
+
+const example108 = `
+~~~ ~~~
+aaa
+`;
+it("example108", () => {
+    expect(fail(example108) != null).toBe(true);
+});
+
+const example109 = `
+~~~~~~
+aaa
+~~~ ~~`;
+it("example109", () => {
+    expect(run(example109).value.content).toMatchInlineSnapshot(`
+        "aaa
+        ~~~ ~~"
+    `);
+});
