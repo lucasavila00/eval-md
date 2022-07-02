@@ -1,8 +1,8 @@
-import { Code } from "../../src/parse-md";
+import { FencedCodeBlockP } from "../../src/parse-md";
 import { runLeft, runRight } from "../utils";
 
-const run = runRight(Code);
-const fail = runLeft(Code);
+const run = runRight(FencedCodeBlockP);
+const fail = runLeft(FencedCodeBlockP);
 
 it("fails", () => {
     expect(fail("") != null).toBe(true);
@@ -57,7 +57,17 @@ it("example89", () => {
     `);
 });
 
-// TODO 90
+const example90 = `
+\`\`\`
+<
+ >
+\`\`\``;
+it("example90", () => {
+    expect(run(example90).value.content).toMatchInlineSnapshot(`
+        "<
+         >"
+    `);
+});
 
 const example91 = `
 ~~
@@ -79,7 +89,17 @@ it("example92", () => {
     `);
 });
 
-// TODO 93
+const example93 = `
+\`\`\`
+aaa
+~~~
+\`\`\``;
+it("example93", () => {
+    expect(run(example93).value.content).toMatchInlineSnapshot(`
+        "aaa
+        ~~~"
+    `);
+});
 
 const example94 = `
 ~~~~
@@ -93,7 +113,17 @@ it("example94", () => {
     `);
 });
 
-// TODO 95
+const example95 = `
+\`\`\`\`
+aaa
+\`\`\`
+\`\`\`\`\`\``;
+it("example95", () => {
+    expect(run(example95).value.content).toMatchInlineSnapshot(`
+        "aaa
+        \`\`\`"
+    `);
+});
 
 const example96 = `
 ~~~`;
@@ -212,7 +242,7 @@ it("example107", () => {
 });
 
 const example108 = `
-~~~ ~~~
+\`\`\` \`\`\`
 aaa
 `;
 it("example108", () => {
@@ -228,4 +258,74 @@ it("example109", () => {
         "aaa
         ~~~ ~~"
     `);
+});
+
+// TODO 110 (not code)
+// TODO 111 (not code)
+
+const example112 = `
+~~~ruby
+def foo(x)
+  return 3
+end
+~~~`;
+it("example112", () => {
+    expect(run(example112).value.content).toMatchInlineSnapshot(`
+        "def foo(x)
+          return 3
+        end"
+    `);
+    expect(run(example112).value.infoString).toMatchInlineSnapshot(`"ruby"`);
+});
+
+const example113 = `
+~~~~    ruby startline=3 $%@#$
+def foo(x)
+  return 3
+end
+~~~~~~~`;
+it("example113", () => {
+    expect(run(example113).value.content).toMatchInlineSnapshot(`
+        "def foo(x)
+          return 3
+        end"
+    `);
+    expect(run(example113).value.infoString).toMatchInlineSnapshot(
+        `"    ruby startline=3 $%@#$"`
+    );
+});
+
+const example114 = `
+~~~~;
+~~~~`;
+it("example114", () => {
+    expect(run(example114).value.content).toMatchInlineSnapshot(`""`);
+    expect(run(example114).value.infoString).toMatchInlineSnapshot(`";"`);
+});
+
+const example115 = `
+\`\`\` aa \`\`\`
+foo`;
+it("example115", () => {
+    expect(fail(example115) != null).toBe(true);
+});
+
+const example116 = `
+~~~ aa \`\`\` ~~~
+foo
+~~~
+`;
+it("example116", () => {
+    expect(run(example116).value.content).toMatchInlineSnapshot(`"foo"`);
+    expect(run(example116).value.infoString).toMatchInlineSnapshot(
+        `" aa \`\`\` ~~~"`
+    );
+});
+
+const example117 = `
+~~~
+~~~ aaa
+~~~`;
+it("example117", () => {
+    expect(run(example117).value.content).toMatchInlineSnapshot(`"~~~ aaa"`);
 });

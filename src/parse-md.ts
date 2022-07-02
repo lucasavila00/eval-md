@@ -22,11 +22,16 @@ export const ValidMarkdown = (content: string): ValidMarkdown => ({
 export type FencedCodeBlock = {
     _tag: "FencedCodeBlock";
     content: string;
+    infoString: string;
 };
 
-export const FencedCodeBlock = (content: string): FencedCodeBlock => ({
+export const FencedCodeBlock = (
+    content: string,
+    meta: string
+): FencedCodeBlock => ({
     _tag: "FencedCodeBlock",
     content,
+    infoString: meta,
 });
 
 const PrecedingFenceSpaces = pipe(
@@ -57,27 +62,42 @@ const FenceOpenerT = (
     meta,
     precedingSpaces,
 });
-export const FenceOpener = pipe(
-    PrecedingFenceSpaces,
-    P.bindTo("precedingSpaces"),
-    P.bind("ticks", () =>
-        pipe(
-            S.string("~~~"),
-            P.chain((it) =>
-                pipe(
-                    S.many(C.char("~")),
-                    P.map((p) => it + p)
+
+const nChars = (it: number, char: string): string => {
+    let acc = "";
+    for (let index = 0; index < it; index++) {
+        acc += char;
+    }
+    return acc;
+};
+
+const FenceOpenerBuilder = (char: string) =>
+    pipe(
+        PrecedingFenceSpaces,
+        P.bindTo("precedingSpaces"),
+        P.bind("ticks", () =>
+            pipe(
+                S.string(nChars(3, char)),
+                P.chain((it) =>
+                    pipe(
+                        S.many(C.char(char)),
+                        P.map((p) => it + p)
+                    )
                 )
             )
+        ),
+        P.bind("meta", () =>
+            P.manyTill(
+                char === "`" ? C.notChar(char) : P.item(),
+                P.lookAhead(P.either(S.string("\n"), () => StringEOF))
+            )
+        ),
+        P.map((it) =>
+            FenceOpenerT(it.ticks, it.meta.join(""), it.precedingSpaces)
         )
-    ),
-    P.bind("meta", () =>
-        P.manyTill(
-            C.notChar("~"),
-            P.lookAhead(P.either(S.string("\n"), () => StringEOF))
-        )
-    ),
-    P.map((it) => FenceOpenerT(it.ticks, it.meta.join(""), it.precedingSpaces))
+    );
+export const FenceOpener = P.either(FenceOpenerBuilder("~"), () =>
+    FenceOpenerBuilder("`")
 );
 
 const FenceCloser = (openerTicks: string) =>
@@ -89,7 +109,8 @@ const FenceCloser = (openerTicks: string) =>
                 S.many(C.char(openerTicks[0])),
                 P.map((p) => it + p)
             )
-        )
+        ),
+        P.chain(() => P.lookAhead(P.either(S.string("\n"), () => StringEOF)))
     );
 
 // const FenceOpenerLA = P.lookAhead(FenceOpener);
@@ -107,14 +128,7 @@ const precedingSpacesOf = (it: string): number => {
     return c;
 };
 
-const nSpaces = (it: number): string => {
-    let acc = "";
-    for (let index = 0; index < it; index++) {
-        acc += " ";
-    }
-    return acc;
-};
-export const Code = pipe(
+export const FencedCodeBlockP = pipe(
     FenceOpener,
     P.bindTo("opener"),
     P.bind("content", (acc) =>
@@ -126,8 +140,8 @@ export const Code = pipe(
     P.bind("closer", (acc) =>
         P.either(FenceCloser(acc.opener.ticks), () => StringEOF)
     ),
-    P.map((it) =>
-        it.content
+    P.map((it) => {
+        const content = it.content
             .join("")
             // remove opener identation
             .split("\n")
@@ -138,7 +152,7 @@ export const Code = pipe(
                         it.opener.precedingSpaces.value.length
                     ) {
                         return line.replace(
-                            nSpaces(precedingSpacesOf(line)),
+                            nChars(precedingSpacesOf(line), " "),
                             ""
                         );
                     }
@@ -154,9 +168,10 @@ export const Code = pipe(
             })
             .join("\n")
             // this is not part of the content
-            .replace("\n", "")
-    ),
-    P.map(FencedCodeBlock)
+            .replace("\n", "");
+
+        return FencedCodeBlock(content, it.opener.meta);
+    })
 );
 
 // export const ValidMarkdownParser = pipe(
