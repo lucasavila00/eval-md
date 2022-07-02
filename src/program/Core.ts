@@ -16,6 +16,7 @@ import { MarkdownAST } from "../md-types";
 import { parseMarkdown } from "../parse-md";
 import { defaultLanguageCompilers } from "../lang-compilers";
 import { CompiledAST, compileOneAst } from "../compile";
+import { run } from "./Runner";
 // import * as E from 'fp-ts/Either'
 
 const CONFIG_FILE_NAME = "eval-md.json";
@@ -210,7 +211,7 @@ const parseFiles = (
 const getExecutableFiles = (
     _compiledFiles: ReadonlyArray<CompiledAstAndFile>
 ): Program<ReadonlyArray<File>> => {
-    const content = "...";
+    const content = "console.log(JSON.stringify([1,2,3]))";
     return pipe(
         RTE.ask<Environment, string>(),
         RTE.map((env) =>
@@ -240,7 +241,31 @@ const writeExecutableFiles = (
         )
     );
 
-const executeFiles = (modules: ReadonlyArray<AstAndFile>): Program<void> =>
+type ExecResult = {
+    value: any;
+};
+const spawnTsNode: Program<ExecResult> = pipe(
+    RTE.ask<Environment, TransportedError>(),
+    RTE.chainFirst(({ logger }) =>
+        RTE.fromTaskEither(logger.debug("Type checking examples..."))
+    ),
+    RTE.chainTaskEitherK(({ settings }) => {
+        const command =
+            process.platform === "win32" ? "ts-node.cmd" : "ts-node";
+        const executablePath = path.join(
+            process.cwd(),
+            settings.outDir,
+            "examples",
+            "index.ts"
+        );
+        return run(command, executablePath);
+    }),
+    RTE.map((value) => ({ value }))
+);
+
+const executeFiles = (
+    modules: ReadonlyArray<AstAndFile>
+): Program<ExecResult> =>
     pipe(
         modules,
         RTE.traverseArray((it) =>
@@ -251,15 +276,38 @@ const executeFiles = (modules: ReadonlyArray<AstAndFile>): Program<void> =>
                 RTE.bind("file", () => RTE.of(it.file))
             )
         ),
-        RTE.chain(writeExecutableFiles)
+        RTE.chain(writeExecutableFiles),
+        RTE.chain(() => spawnTsNode)
+        // RTE.chain(() => cleanExamples)
     );
 
 const getMarkdownFiles = (
-    _modules: ReadonlyArray<AstAndFile>
-): Program<ReadonlyArray<File>> => hole();
+    modules: ReadonlyArray<AstAndFile>
+): Program<ReadonlyArray<File>> =>
+    pipe(modules, RTE.of, RTE.map(RA.map((it) => it.file)));
 
-const writeMarkdownFiles = (_files: ReadonlyArray<File>): Program<void> =>
-    hole();
+const writeMarkdownFiles = (files: ReadonlyArray<File>): Program<void> =>
+    pipe(
+        RTE.ask<Environment, string>(),
+        RTE.chainFirst<Environment, string, Environment, void>(
+            ({ fileSystem, logger, settings }) => {
+                const outPattern = path.join(settings.outDir, "**/*.ts.md");
+                return pipe(
+                    logger.debug(
+                        `Cleaning up docs folder: deleting ${outPattern}`
+                    ),
+                    TE.chain(() => fileSystem.remove(outPattern)),
+                    RTE.fromTaskEither
+                );
+            }
+        ),
+        RTE.chainTaskEitherK((C) =>
+            pipe(
+                C.logger.debug("Writing markdown files..."),
+                TE.chain(() => pipe(C, writeFiles(files)))
+            )
+        )
+    );
 
 /**
  * @category program
@@ -273,10 +321,12 @@ export const main: Effect<void> = pipe(
             RTE.chainTaskEitherK((settings) => {
                 const program = pipe(
                     readSourceFiles,
-                    RTE.chain(parseFiles),
-                    RTE.chainFirst(executeFiles),
-                    RTE.chain(getMarkdownFiles),
-                    RTE.chain(writeMarkdownFiles)
+                    RTE.bindTo("read"),
+                    RTE.bind("parse", (acc) => parseFiles(acc.read)),
+                    RTE.bind("exec", (acc) => executeFiles(acc.parse)),
+                    RTE.bind("md", (acc) => getMarkdownFiles(acc.parse)),
+                    RTE.bind("write", (acc) => writeMarkdownFiles(acc.md)),
+                    RTE.map((_it) => void 0)
                 );
                 return program({ ...capabilities, settings });
             })
