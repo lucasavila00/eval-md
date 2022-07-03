@@ -6,6 +6,8 @@
 
     -   [ ] hoist imports
 
+-   [ ] validate eval args, prevent extra args
+
 -   [ ] cleanup the @since
 -   [ ] attribute docs-ts
 

@@ -1,11 +1,12 @@
 import { FencedCodeBlock, MarkdownAST, OtherMarkdown } from "./md-types";
+import { isEvalInfoString } from "./parse-info-string";
 
 type ExecResult = {
     language: string;
     data: any[];
 };
 
-const yieldTransformer = (
+export const yieldTransformer = (
     ast: MarkdownAST,
     _execResult: ExecResult[]
 ): MarkdownAST => {
@@ -13,10 +14,10 @@ const yieldTransformer = (
 
     for (const item of ast) {
         if (item._tag === "FencedCodeBlock") {
-            // TODO check if is eval call
-            // if is yield block, add yielded data
-
-            // if not yield, add to acc
+            if (isEvalInfoString(item.opener.infoString)) {
+                // if is yield block, add yielded data
+                // if not yield, add to acc, applying transforms
+            }
             acc.push(item);
         } else {
             acc.push(item);
@@ -24,4 +25,3 @@ const yieldTransformer = (
     }
     return acc;
 };
-console.error(yieldTransformer);

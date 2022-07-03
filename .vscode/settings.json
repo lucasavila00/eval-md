@@ -1,3 +1,10 @@
 {
-    "cSpell.words": ["bimap", "Monoid", "overwriteable", "taskify"]
+    "cSpell.words": [
+        "alphanum",
+        "bimap",
+        "Monoid",
+        "overwriteable",
+        "Semigroup",
+        "taskify"
+    ]
 }

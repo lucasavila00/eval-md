@@ -14,4 +14,4 @@ jobs:
               run: |
                   npm ci
                   npm run static
-                  npm run test
+                  npm run test -- --collect-coverage
