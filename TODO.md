@@ -1,22 +1,10 @@
--   [ ] pollution of stdout
-
--   [ ] capture console.log
-
--   [ ] print self, ie TS util.inspect will format as TS
-
--   [ ] remove print term
+-   [ ] exec shouldn't be called index, might collide with md
 
 -   [ ] adding custom printer, like custom lang
 
 -   [ ] eslint
 
     -   [ ] enable no console
-
--   [ ] print transformer
-
--   [ ] ts compiler
-
-    -   [ ] hoist imports
 
 -   [ ] validate eval args, prevent extra args
 

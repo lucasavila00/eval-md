@@ -27,7 +27,9 @@ function visitNode(node: any, fn: any) {
     return node;
 }
 const src = `
+x.console.log('a')
 console.log('a')
+consol.log('a')
 `;
 it("works", () => {
     const it = prettier.format(src, {
@@ -65,7 +67,9 @@ it("works", () => {
     });
 
     expect(it).toMatchInlineSnapshot(`
-        "__console.log(\\"a\\");
+        "x.console.log(\\"a\\");
+        __console.log(\\"a\\");
+        consol.log(\\"a\\");
         "
     `);
 });
