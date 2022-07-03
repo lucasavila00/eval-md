@@ -6,7 +6,7 @@ import * as O from "fp-ts/lib/Option";
 
 const buildDeps = (it: Partial<Environment> = {}): Environment => it as any;
 
-const str1 = `~~~ts
+const str1 = `~~~ts eval
 ~~~`;
 it("str1", async () => {
     const ast = parseMarkdown(str1);
@@ -33,10 +33,10 @@ it("str1", async () => {
     `);
 });
 
-const str2 = `~~~ts
+const str2 = `~~~ts eval
 ~~~
 
-~~~js
+~~~js eval
 ~~~
 
 `;

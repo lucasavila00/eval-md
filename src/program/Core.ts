@@ -13,7 +13,7 @@ import * as path from "path";
 import * as RA from "fp-ts/ReadonlyArray";
 import * as TE from "fp-ts/TaskEither";
 import { MarkdownAST } from "../md-types";
-import { parseMarkdown } from "../parse-md";
+import { parseMarkdown, printMarkdown } from "../parse-md";
 import { defaultLanguageCompilers } from "../lang-compilers";
 import { CompiledAST, compileOneAst } from "../compile";
 import { run } from "./Runner";
@@ -276,6 +276,7 @@ const writeExecutableFiles = (
     );
 
 type ExecResult = {
+    language: string;
     value: any;
 };
 const spawnTsNode: Program<ExecResult> = pipe(
@@ -296,13 +297,13 @@ const spawnTsNode: Program<ExecResult> = pipe(
 
     RTE.map((value) => {
         console.error(value);
-        return { value };
+        return { value, language: "ts" };
     })
 );
 
 const executeFiles = (
     modules: ReadonlyArray<AstAndFile>
-): Program<ExecResult> =>
+): Program<ExecResult[]> =>
     pipe(
         modules,
         RTE.traverseArray((it) =>
@@ -314,15 +315,32 @@ const executeFiles = (
             )
         ),
         RTE.chain(writeExecutableFiles),
-        RTE.chain(() => spawnTsNode)
+        RTE.chain(() => spawnTsNode),
+        RTE.map((it) => [it])
         // RTE.chain(() => cleanExamples)
     );
 
 console.error("change path");
 const getMarkdownFiles = (
-    modules: ReadonlyArray<AstAndFile>
+    modules: ReadonlyArray<AstAndFile>,
+    execResults: ExecResult[]
 ): Program<ReadonlyArray<File>> =>
-    pipe(modules, RTE.of, RTE.map(RA.map((it) => it.file)));
+    pipe(
+        RTE.ask<Environment, TransportedError>(),
+        RTE.map((env) =>
+            pipe(
+                modules,
+                RA.map((it) => {
+                    const content = printMarkdown(it.ast);
+                    const path = it.file.path.replace(
+                        env.settings.srcDir,
+                        env.settings.outDir
+                    );
+                    return File(path, content, true);
+                })
+            )
+        )
+    );
 
 const writeMarkdownFiles = (files: ReadonlyArray<File>): Program<void> =>
     pipe(
@@ -362,7 +380,9 @@ export const main: Effect<void> = pipe(
                     RTE.bindTo("read"),
                     RTE.bind("parse", (acc) => parseFiles(acc.read)),
                     RTE.bind("exec", (acc) => executeFiles(acc.parse)),
-                    RTE.bind("md", (acc) => getMarkdownFiles(acc.parse)),
+                    RTE.bind("md", (acc) =>
+                        getMarkdownFiles(acc.parse, acc.exec)
+                    ),
                     RTE.bind("write", (acc) => writeMarkdownFiles(acc.md)),
                     RTE.map((_it) => void 0)
                 );

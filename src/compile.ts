@@ -5,7 +5,8 @@ import * as TE from "fp-ts/lib/TaskEither";
 import * as A from "fp-ts/lib/Array";
 import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as O from "fp-ts/lib/Option";
-import { getInfoStringLanguage } from "./parse-info-string";
+import { getInfoStringLanguage, isEvalInfoString } from "./parse-info-string";
+import { NonEmptyArray, fromArray } from "fp-ts/lib/NonEmptyArray";
 
 const getCompilers = (): Program<LanguageCompiler[]> => (deps) =>
     TE.of(deps.settings.languageCompilers);
@@ -21,10 +22,13 @@ const filterLanguageBlocks = (
         fencedCodeBlocksFromAST(ast),
         A.filter((it) =>
             pipe(
+                // do it as lazily ass possible, to only throw errors if we're supposed to eval the code block
                 getInfoStringLanguage(it.opener.infoString),
                 O.fold(
                     () => false,
-                    (it) => it === comp.language
+                    (lang) =>
+                        lang === comp.language &&
+                        isEvalInfoString(it.opener.infoString)
                 )
             )
         ),
@@ -33,7 +37,7 @@ const filterLanguageBlocks = (
 
 const tryCatchCompiler =
     (
-        blocks: FencedCodeBlock[],
+        blocks: NonEmptyArray<FencedCodeBlock>,
         comp: LanguageCompiler
     ): Program<O.Option<string>> =>
     (_deps) =>
@@ -53,11 +57,12 @@ const runOneCompiler = (
 ): Program<O.Option<CompiledAST>> =>
     pipe(
         filterLanguageBlocks(ast, comp),
+        RTE.map(fromArray),
         RTE.chain((blocks) =>
-            blocks.length === 0
+            O.isNone(blocks)
                 ? RTE.of(O.none)
                 : pipe(
-                      tryCatchCompiler(blocks, comp),
+                      tryCatchCompiler(blocks.value, comp),
                       RTE.map(
                           O.map((it) => ({
                               code: it,

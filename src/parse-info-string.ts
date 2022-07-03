@@ -36,3 +36,18 @@ export const getInfoStringLanguage = (infoString: string): O.Option<string> =>
             (it) => it.value
         )
     );
+
+const EvalP = pipe(
+    LanguageP,
+    P.chain(() => S.string(" ")),
+    P.chain(() => S.string("eval"))
+);
+export const isEvalInfoString = (infoString: string): boolean =>
+    pipe(
+        EvalP,
+        S.run(infoString),
+        E.fold(
+            (_e) => false,
+            (_it) => true
+        )
+    );

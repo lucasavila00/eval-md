@@ -3,13 +3,14 @@ import * as O from "fp-ts/lib/Option";
 import { FencedCodeBlock } from "./md-types";
 import { FileSystem } from "./program/FileSystem";
 import { Logger } from "./program/Logger";
+import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 
 export type TransportedError = any;
 
 export type LanguageCompiler = {
     language: string;
     compileToExecutable: (
-        blocks: FencedCodeBlock[]
+        blocks: NonEmptyArray<FencedCodeBlock>
     ) => Promise<O.Option<string>>;
 };
 
