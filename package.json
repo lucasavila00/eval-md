@@ -10,7 +10,7 @@
         "static": "npm run prettier-check && npm run ts && npm run lint",
         "exec": "ts-node src/bin.ts",
         "ts": "tsc --noEmit",
-        "mon": "nodemon --watch ./src --exec \"ts-node\" --transpileOnly ./src/bin.ts"
+        "mon": "nodemon --watch ./eval-mds -e md --exec \"ts-node\" --transpileOnly ./src/bin.ts"
     },
     "keywords": [],
     "author": "",

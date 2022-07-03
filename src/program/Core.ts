@@ -18,7 +18,7 @@ import { defaultLanguageCompilers } from "../lang-compilers";
 import { CompiledAST, compileOneAst } from "../compile";
 import { run } from "./Runner";
 import { indexTemplate } from "../lang-compilers/typescript/templates";
-import { yieldTransformer } from "../yield-transformer";
+import { evalTransformer } from "../yield-transformer";
 
 const CONFIG_FILE_NAME = "eval-md.json";
 
@@ -337,7 +337,7 @@ const getMarkdownFiles = (
                             data: fromThisFile,
                         };
                     });
-                    const content = yieldTransformer(it.ast, exec);
+                    const content = evalTransformer(it.ast, exec);
                     const path = it.file.path.replace(
                         env.settings.srcDir,
                         env.settings.outDir

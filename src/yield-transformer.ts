@@ -4,10 +4,15 @@ import {
     MarkdownAST,
     OtherMarkdown,
 } from "./md-types";
-import { isEvalInfoString, parseInfoString } from "./parse-info-string";
+import {
+    InfoString,
+    isEvalInfoString,
+    parseInfoString,
+} from "./parse-info-string";
 import * as E from "fp-ts/lib/Either";
 import * as RA from "fp-ts/lib/ReadonlyArray";
 import { pipe } from "fp-ts/lib/function";
+import { printMarkdown } from "./parse-md";
 
 type PerFileAndLanguageExecResult = {
     language: string;
@@ -25,9 +30,30 @@ const transformYieldedValue = (value: any, yieldLanguage: string) => {
     }
 };
 
+console.error("rename file");
 console.error("improve error handling, refactor...");
 
-export const yieldTransformer = (
+const addMeta = (
+    infoString: InfoString,
+    block: FencedCodeBlock
+): MarkdownAST => {
+    if (infoString.flags.includes("meta")) {
+        const printed = printMarkdown([block]);
+        return [
+            FencedCodeBlock(
+                printed,
+                FenceOpener(
+                    block.opener.ticks + block.opener.ticks[0],
+                    "md",
+                    block.opener.precedingSpaces
+                )
+            ),
+            OtherMarkdown("\n"),
+        ];
+    }
+    return [];
+};
+export const evalTransformer = (
     ast: MarkdownAST,
     execResult: PerFileAndLanguageExecResult[]
 ): MarkdownAST => {
@@ -56,6 +82,7 @@ export const yieldTransformer = (
                         const ret = thisLangExec?.data[index];
                         languageIndexes[infoString.language]++;
                         return [
+                            ...addMeta(infoString, item),
                             FencedCodeBlock(
                                 item.content,
                                 FenceOpener(
@@ -77,6 +104,7 @@ export const yieldTransformer = (
                     } else {
                         // not yield block, remove anything other than language from info string
                         return [
+                            ...addMeta(infoString, item),
                             FencedCodeBlock(
                                 item.content,
                                 FenceOpener(
