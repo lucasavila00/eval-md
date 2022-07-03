@@ -1,3 +1,10 @@
+---
+title: Basic
+nav_order: 1
+parent: Tests
+layout: default
+---
+
 # Basic tests
 
 It won't change or eval an unrecognized language.
