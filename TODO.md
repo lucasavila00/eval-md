@@ -2,17 +2,17 @@
 
 -   [ ] capture console.log
 
--   [ ] yield self, ie TS util.inspect will format as TS
+-   [ ] print self, ie TS util.inspect will format as TS
 
--   [ ] remove yield term
+-   [ ] remove print term
 
--   [ ] adding custom yielder, like custom lang
+-   [ ] adding custom printer, like custom lang
 
 -   [ ] eslint
 
     -   [ ] enable no console
 
--   [ ] yield transformer
+-   [ ] print transformer
 
 -   [ ] ts compiler
 

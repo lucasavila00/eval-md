@@ -70,10 +70,10 @@ const add1 = (it: number) => it + 1;
 const add1 = (it: number) => it + 1;
 ```
 
-It handles yielding values from the evaluated code, that will be printed in the generated markdown.
+It handles printing values from the evaluated code, that will be printed in the generated markdown.
 
 ````md
-```ts eval --yield=json --meta
+```ts eval --print=json --meta
 add1(3);
 ```
 ````

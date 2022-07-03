@@ -33,23 +33,23 @@ it("works", () => {
           "named": Object {},
         }
     `);
-    expect(run("ts eval --yield=sql").value).toMatchInlineSnapshot(`
+    expect(run("ts eval --print=sql").value).toMatchInlineSnapshot(`
         Object {
           "_tag": "InfoString",
           "evalStr": "eval",
           "flags": Array [],
           "language": "ts",
           "named": Object {
-            "yield": "sql",
+            "print": "sql",
           },
         }
     `);
-    expect(run("ts eval --yield").value).toMatchInlineSnapshot(`
+    expect(run("ts eval --print").value).toMatchInlineSnapshot(`
         Object {
           "_tag": "InfoString",
           "evalStr": "eval",
           "flags": Array [
-            "yield",
+            "print",
           ],
           "language": "ts",
           "named": Object {},

@@ -72,7 +72,10 @@ const consumeLastStatement = (block: FencedCodeBlock): string => {
         })
         .trimEnd();
 };
-
+const consumeError = (code: string) => {
+    return `try {${code}; throw new Error('did-not-throw')}
+catch(e:any) {if(e.message === 'did-not-throw'){throw e}else{__consume(e)}}`;
+};
 export const typescriptLanguageCompiler: LanguageCompiler = {
     language: "ts",
     compileToExecutable: async (blocks) => {
@@ -84,8 +87,12 @@ export const typescriptLanguageCompiler: LanguageCompiler = {
             }
             const infoString = either.right.value;
 
-            if (infoString.named["yield"] != null) {
-                content += consumeLastStatement(b);
+            if (infoString.named["print"] != null) {
+                if (infoString.named["print"] === "error") {
+                    content += consumeError(b.content);
+                } else {
+                    content += consumeLastStatement(b);
+                }
             } else {
                 content += b.content;
             }

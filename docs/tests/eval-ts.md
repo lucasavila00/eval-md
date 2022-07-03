@@ -1,5 +1,5 @@
 ---
-title: Yield (TS)
+title: Eval (TS)
 nav_order: 1
 parent: Tests
 layout: default
@@ -16,11 +16,23 @@ layout: default
 
 # Eval
 
-TODO
+```ts
+1 + 1;
+```
 
 # Error capture
 
-TODO
+Notice: An error throw in a block that is not `--print=error` will make `eval-md` throw.
+
+Not throwing in a block that is `--print=error` will also make `eval-md` throw.
+
+```ts
+throw new Error("...");
+```
+
+```error
+Error: ...
+```
 
 # Console capture
 
@@ -30,7 +42,7 @@ TODO
 
 TODO
 
-# Yield
+# Print
 
 ```ts
 1;

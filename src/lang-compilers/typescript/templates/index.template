@@ -5,11 +5,27 @@ type GenDef = {
     source: string;
 };
 
+const stringifyFileResponse = (response: any[]) => {
+    return response.map((it) => {
+        if (it instanceof Error) {
+            return String(it);
+        }
+        return JSON.stringify(it);
+    });
+};
+
 const main = async () => {
     const response: Record<string, any[]> = {};
     for (const def of generators) {
-        response[def.source] = await def.generator();
+        response[def.source] = await def
+            .generator()
+            .then(stringifyFileResponse);
     }
+    process.stdout.write("\n##eval-md-start##\n");
     process.stdout.write(JSON.stringify(response));
+    process.stdout.write("\n##eval-md-end##\n");
 };
-main();
+main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+});

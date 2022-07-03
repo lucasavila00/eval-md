@@ -18,7 +18,7 @@ import { defaultLanguageCompilers } from "../lang-compilers";
 import { CompiledAST, compileOneAst } from "../compile";
 import { run } from "./Runner";
 import { indexTemplate } from "../lang-compilers/typescript/templates";
-import { evalTransformer } from "../yield-transformer";
+import { evalTransformer } from "../print-transformer";
 
 const CONFIG_FILE_NAME = "eval-md.json";
 
@@ -278,7 +278,7 @@ const writeExecutableFiles = (
 
 type ExecResult = {
     language: string;
-    value: any;
+    stdout: any;
 };
 const spawnTsNode: Program<ExecResult> = pipe(
     RTE.ask<Environment, TransportedError>(),
@@ -295,9 +295,8 @@ const spawnTsNode: Program<ExecResult> = pipe(
         );
         return run(command, executablePath);
     }),
-
-    RTE.map((value) => {
-        return { value, language: "ts" };
+    RTE.map((stdout) => {
+        return { stdout, language: "ts" };
     })
 );
 
@@ -320,6 +319,24 @@ const executeFiles = (
         RTE.map((it) => [it])
     );
 
+const getFromStdout = (it: string): string => {
+    const acc: string[] = [];
+    let capturing = false;
+    for (const line of it.split("\n")) {
+        if (line.startsWith("##eval-md-end##")) {
+            return acc.join("\n");
+        }
+        if (capturing) {
+            acc.push(line);
+        }
+        if (line.startsWith("##eval-md-start##")) {
+            capturing = true;
+        }
+    }
+
+    return acc.join("\n");
+};
+
 const getMarkdownFiles = (
     modules: ReadonlyArray<AstAndFile>,
     execResults: ExecResult[]
@@ -331,7 +348,7 @@ const getMarkdownFiles = (
                 modules,
                 RA.map((it) => {
                     const exec = execResults.map((exec) => {
-                        const parsed = JSON.parse(exec.value);
+                        const parsed = JSON.parse(getFromStdout(exec.stdout));
                         const fromThisFile = parsed[it.file.path];
                         return {
                             language: exec.language,

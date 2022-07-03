@@ -27,10 +27,10 @@ it("works", async () => {
           },
           Object {
             "_tag": "FencedCodeBlock",
-            "content": "yield add1(3);",
+            "content": "print add1(3);",
             "opener": Object {
               "_tag": "FenceOpener",
-              "infoString": "ts eval --yield=json",
+              "infoString": "ts eval --print=json",
               "precedingSpaces": Object {
                 "_tag": "None",
               },

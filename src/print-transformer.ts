@@ -19,13 +19,19 @@ type PerFileAndLanguageExecResult = {
     data: any[];
 };
 
-const transformYieldedValue = (value: any, yieldLanguage: string) => {
-    switch (yieldLanguage) {
+const transformPrintedValue = (value: any, printLanguage: string): string => {
+    switch (printLanguage) {
         case "json": {
-            return JSON.stringify(value);
+            return JSON.stringify(JSON.parse(value));
         }
         case "sql": {
             return value;
+        }
+        case "error": {
+            return value;
+        }
+        default: {
+            throw new Error("invalid language");
         }
     }
 };
@@ -70,9 +76,9 @@ export const evalTransformer = (
                     throw new Error("info string parse error");
                 } else {
                     const infoString = either.right.value;
-                    // if is yield block, add yielded data
-                    if (infoString.named["yield"] != null) {
-                        const yieldLang = infoString.named["yield"];
+                    // if is print block, add printed data
+                    if (infoString.named["print"] != null) {
+                        const printLang = infoString.named["print"];
                         const thisLangExec = execResult.find(
                             (it) => it.language === infoString.language
                         );
@@ -93,16 +99,16 @@ export const evalTransformer = (
                             ),
                             OtherMarkdown("\n"),
                             FencedCodeBlock(
-                                transformYieldedValue(ret, yieldLang),
+                                transformPrintedValue(ret, printLang),
                                 FenceOpener(
                                     item.opener.ticks,
-                                    yieldLang,
+                                    printLang,
                                     item.opener.precedingSpaces
                                 )
                             ),
                         ];
                     } else {
-                        // not yield block, remove anything other than language from info string
+                        // not print block, remove anything other than language from info string
                         return [
                             ...addMeta(infoString, item),
                             FencedCodeBlock(

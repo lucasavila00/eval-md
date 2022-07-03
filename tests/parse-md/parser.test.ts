@@ -195,8 +195,8 @@ const codeBlock13 = `
 const add1 = (it: number) => it + 1;
 ~~~
 
-~~~ts eval --yield=json
-yield add1(3);
+~~~ts eval --print=json
+print add1(3);
 ~~~
 `;
 it("codeBlock13", () => {
