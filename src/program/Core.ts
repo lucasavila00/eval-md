@@ -19,7 +19,6 @@ import { CompiledAST, compileOneAst } from "../compile";
 import { run } from "./Runner";
 import { indexTemplate } from "../lang-compilers/typescript/templates";
 import { yieldTransformer } from "../yield-transformer";
-// import * as E from 'fp-ts/Either'
 
 const CONFIG_FILE_NAME = "eval-md.json";
 
@@ -123,6 +122,7 @@ const getDefaultSettings = (): Settings => ({
     exclude: [],
 });
 
+console.error("implement me");
 const parseConfiguration =
     (_defaultSettings: Settings) =>
     (_file: File): Effect<Settings> =>
@@ -157,7 +157,6 @@ const useDefaultSettings = (defaultSettings: Settings): Effect<Settings> =>
         )
     );
 
-//   pipe(Config.build(projectName, projectHomepage), Config.resolveSettings)
 const getConfiguration = (): Effect<Settings> =>
     pipe(
         hasConfiguration,
@@ -301,6 +300,7 @@ const spawnTsNode: Program<ExecResult> = pipe(
     })
 );
 
+console.error("more than 1 lang");
 const executeFiles = (
     modules: ReadonlyArray<AstAndFile>
 ): Program<ExecResult[]> =>
@@ -317,7 +317,6 @@ const executeFiles = (
         RTE.chain(writeExecutableFiles),
         RTE.chain(() => spawnTsNode),
         RTE.map((it) => [it])
-        // RTE.chain(() => cleanExamples)
     );
 
 const getMarkdownFiles = (
@@ -330,12 +329,12 @@ const getMarkdownFiles = (
             pipe(
                 modules,
                 RA.map((it) => {
-                    const exec = execResults.map((it) => {
-                        console.error("implement!!!");
-                        // parse exec results JSON, key it by file name
+                    const exec = execResults.map((exec) => {
+                        const parsed = JSON.parse(exec.value);
+                        const fromThisFile = parsed[it.file.path];
                         return {
-                            language: it.language,
-                            data: [4],
+                            language: exec.language,
+                            data: fromThisFile,
                         };
                     });
                     const content = yieldTransformer(it.ast, exec);

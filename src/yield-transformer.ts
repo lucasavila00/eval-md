@@ -14,7 +14,19 @@ type PerFileAndLanguageExecResult = {
     data: any[];
 };
 
+const transformYieldedValue = (value: any, yieldLanguage: string) => {
+    switch (yieldLanguage) {
+        case "json": {
+            return JSON.stringify(value);
+        }
+        case "sql": {
+            return value;
+        }
+    }
+};
+
 console.error("improve error handling, refactor...");
+
 export const yieldTransformer = (
     ast: MarkdownAST,
     execResult: PerFileAndLanguageExecResult[]
@@ -32,6 +44,7 @@ export const yieldTransformer = (
                     throw new Error("info string parse error");
                 } else {
                     const infoString = either.right.value;
+                    // if is yield block, add yielded data
                     if (infoString.named["yield"] != null) {
                         const yieldLang = infoString.named["yield"];
                         const thisLangExec = execResult.find(
@@ -53,7 +66,7 @@ export const yieldTransformer = (
                             ),
                             OtherMarkdown("\n"),
                             FencedCodeBlock(
-                                JSON.stringify(ret),
+                                transformYieldedValue(ret, yieldLang),
                                 FenceOpener(
                                     item.opener.ticks,
                                     yieldLang,
@@ -61,8 +74,8 @@ export const yieldTransformer = (
                                 )
                             ),
                         ];
-                        // if is yield block, add yielded data
                     } else {
+                        // not yield block, remove anything other than language from info string
                         return [
                             FencedCodeBlock(
                                 item.content,
