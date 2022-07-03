@@ -6,5 +6,13 @@
 
     -   [ ] hoist imports
 
--   [ ] cleanup the since
+-   [ ] cleanup the @since
 -   [ ] attribute docs-ts
+
+-   [ ] eslint
+
+    -   [ ] enable no console
+
+-   [ ] tests
+
+    -   [ ] enable coverage

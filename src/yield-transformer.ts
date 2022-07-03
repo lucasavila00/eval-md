@@ -1,4 +1,3 @@
-import { hole } from "fp-ts/lib/function";
 import { FencedCodeBlock, MarkdownAST, OtherMarkdown } from "./md-types";
 
 type ExecResult = {
@@ -8,7 +7,7 @@ type ExecResult = {
 
 const yieldTransformer = (
     ast: MarkdownAST,
-    execResult: ExecResult[]
+    _execResult: ExecResult[]
 ): MarkdownAST => {
     const acc: (OtherMarkdown | FencedCodeBlock)[] = [];
 
@@ -25,3 +24,4 @@ const yieldTransformer = (
     }
     return acc;
 };
+console.error(yieldTransformer);

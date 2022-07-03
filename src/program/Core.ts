@@ -323,7 +323,7 @@ const executeFiles = (
 console.error("change path");
 const getMarkdownFiles = (
     modules: ReadonlyArray<AstAndFile>,
-    execResults: ExecResult[]
+    _execResults: ExecResult[]
 ): Program<ReadonlyArray<File>> =>
     pipe(
         RTE.ask<Environment, TransportedError>(),
