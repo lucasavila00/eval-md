@@ -238,7 +238,8 @@ const getExecutableFiles = (
                         .map((it) => it.outFile)
                         .map((it) => it.path.replace(env.settings.srcDir, "."))
                         .map((it) => it.replace(".ts", ""))
-                        .map((it, idx) => `import g${idx} from '${it}'`);
+                        .map((it, idx) => `import g${idx} from '${it}';`)
+                        .join("\n");
 
                     const generators = acc.comp
                         .map(

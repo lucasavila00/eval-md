@@ -5,6 +5,17 @@ parent: Tests
 layout: default
 ---
 
+<details open markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
+1. TOC
+{:toc}
+</details>
+
+TODO link to original file
+
 # Basic tests
 
 ## Not calling eval
@@ -63,12 +74,12 @@ It handles yielding values from the evaluated code, that will be printed in the 
 
 ````md
 ```ts eval --yield=json --meta
-yield add1(3);
+add1(3);
 ```
 ````
 
 ```ts
-yield add1(3);
+add1(3);
 ```
 
 ```json

@@ -1,8 +1,10 @@
--   [ ] --meta handler
+-   [ ] pollution of stdout
 
--   [ ] copy 1 file from sql-select-ts, add it as dev dep
+-   [ ] capture console.log
 
-    -   [ ] ts transform, rm yield
+-   [ ] yield self, ie TS util.inspect will format as TS
+
+-   [ ] remove yield term
 
 -   [ ] adding custom yielder, like custom lang
 
