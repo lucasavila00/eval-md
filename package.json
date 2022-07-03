@@ -6,6 +6,8 @@
     "scripts": {
         "test": "jest",
         "exec": "ts-node --transpileOnly src/bin.ts",
+        "o": "ts-node --transpileOnly ts-out-goal/index.ts",
+        "ts": "tsc --noEmit",
         "mon": "nodemon --watch ./src --exec \"ts-node\" --transpileOnly ./src/bin.ts"
     },
     "keywords": [],

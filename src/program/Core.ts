@@ -17,6 +17,7 @@ import { parseMarkdown } from "../parse-md";
 import { defaultLanguageCompilers } from "../lang-compilers";
 import { CompiledAST, compileOneAst } from "../compile";
 import { run } from "./Runner";
+import { indexTemplate } from "../lang-compilers/typescript/templates";
 // import * as E from 'fp-ts/Either'
 
 const CONFIG_FILE_NAME = "eval-md.json";
@@ -208,22 +209,55 @@ const parseFiles = (
         RTE.chain(() => parseMdFiles(files))
     );
 
+// todo improve
+const getExecFileName = (file: File, language: string): string =>
+    file.path.replace(".md", "." + language);
+
 const getExecutableFiles = (
-    _compiledFiles: ReadonlyArray<CompiledAstAndFile>
-): Program<ReadonlyArray<File>> => {
-    const content = "console.log(JSON.stringify([1,2,3]))";
-    return pipe(
-        RTE.ask<Environment, string>(),
-        RTE.map((env) =>
-            File(
-                path.join(env.settings.outDir, "examples", "index.ts"),
-                `${content}\n`,
-                true
+    compiledFiles: ReadonlyArray<CompiledAstAndFile>
+): Program<ReadonlyArray<File>> =>
+    pipe(
+        compiledFiles,
+        RA.chain((it) =>
+            it.compiledAsts.map((ast) => ({
+                inFile: it.file,
+                outFile: File(
+                    getExecFileName(it.file, ast.language),
+                    ast.code,
+                    true
+                ),
+            }))
+        ),
+        RTE.of,
+        RTE.bindTo("comp"),
+        RTE.bind("index", (acc) =>
+            pipe(
+                RTE.ask<Environment, TransportedError>(),
+                RTE.map((env) => {
+                    const imports = acc.comp
+                        .map((it) => it.outFile)
+                        .map((it) => it.path.replace(env.settings.srcDir, "."))
+                        .map((it) => it.replace(".ts", ""))
+                        .map((it, idx) => `import g${idx} from '${it}'`);
+
+                    const generators = acc.comp
+                        .map(
+                            (it, idx) =>
+                                `{generator: g${idx}, source: "${it.inFile.path}", }`
+                        )
+                        .join(",");
+                    return File(
+                        path.join(env.settings.srcDir, "index.ts"),
+                        indexTemplate(
+                            `${imports}\nconst generators: GenDef[] = [${generators}];`
+                        ),
+                        true
+                    );
+                })
             )
         ),
-        RTE.map((it) => [it])
+        RTE.map((it) => [it.index, ...it.comp.map((it) => it.outFile)])
     );
-};
 
 const writeExecutableFiles = (
     compiledFiles: ReadonlyArray<CompiledAstAndFile>
@@ -254,13 +288,16 @@ const spawnTsNode: Program<ExecResult> = pipe(
             process.platform === "win32" ? "ts-node.cmd" : "ts-node";
         const executablePath = path.join(
             process.cwd(),
-            settings.outDir,
-            "examples",
+            settings.srcDir,
             "index.ts"
         );
         return run(command, executablePath);
     }),
-    RTE.map((value) => ({ value }))
+
+    RTE.map((value) => {
+        console.error(value);
+        return { value };
+    })
 );
 
 const executeFiles = (
@@ -281,6 +318,7 @@ const executeFiles = (
         // RTE.chain(() => cleanExamples)
     );
 
+console.error("change path");
 const getMarkdownFiles = (
     modules: ReadonlyArray<AstAndFile>
 ): Program<ReadonlyArray<File>> =>
