@@ -118,7 +118,7 @@ const readConfiguration: Effect<File> = pipe(
 const getDefaultSettings = (): Settings => ({
     languageCompilers: defaultLanguageCompilers,
     srcDir: "eval-mds",
-    outDir: "docs/eval",
+    outDir: "docs",
     exclude: [],
 });
 
