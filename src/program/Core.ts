@@ -18,6 +18,7 @@ import { defaultLanguageCompilers } from "../lang-compilers";
 import { CompiledAST, compileOneAst } from "../compile";
 import { run } from "./Runner";
 import { indexTemplate } from "../lang-compilers/typescript/templates";
+import { yieldTransformer } from "../yield-transformer";
 // import * as E from 'fp-ts/Either'
 
 const CONFIG_FILE_NAME = "eval-md.json";
@@ -296,7 +297,6 @@ const spawnTsNode: Program<ExecResult> = pipe(
     }),
 
     RTE.map((value) => {
-        console.error(value);
         return { value, language: "ts" };
     })
 );
@@ -320,10 +320,9 @@ const executeFiles = (
         // RTE.chain(() => cleanExamples)
     );
 
-console.error("change path");
 const getMarkdownFiles = (
     modules: ReadonlyArray<AstAndFile>,
-    _execResults: ExecResult[]
+    execResults: ExecResult[]
 ): Program<ReadonlyArray<File>> =>
     pipe(
         RTE.ask<Environment, TransportedError>(),
@@ -331,12 +330,20 @@ const getMarkdownFiles = (
             pipe(
                 modules,
                 RA.map((it) => {
-                    const content = printMarkdown(it.ast);
+                    const exec = execResults.map((it) => {
+                        console.error("implement!!!");
+                        // parse exec results JSON, key it by file name
+                        return {
+                            language: it.language,
+                            data: [4],
+                        };
+                    });
+                    const content = yieldTransformer(it.ast, exec);
                     const path = it.file.path.replace(
                         env.settings.srcDir,
                         env.settings.outDir
                     );
-                    return File(path, content, true);
+                    return File(path, printMarkdown(content), true);
                 })
             )
         )

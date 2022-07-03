@@ -15,3 +15,11 @@ jobs:
                   npm ci
                   npm run static
                   npm run test -- --collect-coverage
+
+                  echo "Check we are starting with clean git checkout"
+                  if [ -n "$(git status -uno -s)" ]; then echo "git status is not clean"; false; fi
+                  echo "Checking that it was built by building"
+                  rm -rf docs/eval
+                  npm run exec
+                  echo "Check that build was unnecessary"
+                  if [ -n "$(git status -uno -s)" ]; then echo -e "!!! Changed files."; false; fi

@@ -8,8 +8,7 @@
         "lint": "eslint .",
         "prettier-check": "prettier --check \"{src,scripts,tests}/**/*.{js,jsx,ts,tsx,json,css,md}\"",
         "static": "npm run prettier-check && npm run ts && npm run lint",
-        "exec": "ts-node --transpileOnly src/bin.ts",
-        "o": "ts-node --transpileOnly ts-out-goal/index.ts",
+        "exec": "ts-node src/bin.ts",
         "ts": "tsc --noEmit",
         "mon": "nodemon --watch ./src --exec \"ts-node\" --transpileOnly ./src/bin.ts"
     },

@@ -23,12 +23,12 @@ export const OtherMarkdown = (content: string): OtherMarkdown => ({
 
 export const FenceOpener = (
     ticks: string,
-    meta: string,
+    infoString: string,
     precedingSpaces: O.Option<string>
 ): FenceOpener => ({
     _tag: "FenceOpener",
     ticks,
-    infoString: meta,
+    infoString,
     precedingSpaces,
 });
 

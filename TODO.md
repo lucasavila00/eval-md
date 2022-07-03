@@ -1,6 +1,6 @@
--   [ ] yield transformer
+-   [ ] CI should rebuild mds, make sure nothing changed
 
-    -   [ ] data types the executor should return
+-   [ ] yield transformer
 
 -   [ ] ts compiler
 
