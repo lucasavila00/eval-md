@@ -1,4 +1,4 @@
-import { InfoStringP } from "../../src/parse-info-string";
+import { InfoStringP } from "../../src/program/InfoStringParser";
 import { runRight, runLeft } from "../parse-md/utils";
 
 const run = runRight(InfoStringP);
@@ -17,8 +17,7 @@ it("fails", () => {
 it("works", () => {
     expect(run("ts eval").value).toMatchInlineSnapshot(`
         Object {
-          "_tag": "InfoString",
-          "evalStr": "eval",
+          "_tag": "EvalInfoString",
           "flags": Array [],
           "language": "ts",
           "named": Object {},
@@ -26,8 +25,7 @@ it("works", () => {
     `);
     expect(run("ts eval ").value).toMatchInlineSnapshot(`
         Object {
-          "_tag": "InfoString",
-          "evalStr": "eval",
+          "_tag": "EvalInfoString",
           "flags": Array [],
           "language": "ts",
           "named": Object {},
@@ -35,8 +33,7 @@ it("works", () => {
     `);
     expect(run("ts eval --print=sql").value).toMatchInlineSnapshot(`
         Object {
-          "_tag": "InfoString",
-          "evalStr": "eval",
+          "_tag": "EvalInfoString",
           "flags": Array [],
           "language": "ts",
           "named": Object {
@@ -46,8 +43,7 @@ it("works", () => {
     `);
     expect(run("ts eval --print").value).toMatchInlineSnapshot(`
         Object {
-          "_tag": "InfoString",
-          "evalStr": "eval",
+          "_tag": "EvalInfoString",
           "flags": Array [
             "print",
           ],
@@ -57,8 +53,7 @@ it("works", () => {
     `);
     expect(run("ts eval --meta").value).toMatchInlineSnapshot(`
         Object {
-          "_tag": "InfoString",
-          "evalStr": "eval",
+          "_tag": "EvalInfoString",
           "flags": Array [
             "meta",
           ],

@@ -1,10 +1,11 @@
-import { parseMarkdown } from "../../../src/parse-md";
 import * as fs from "fs/promises";
 import { assertIsRight } from "../../utils";
 import * as path from "path";
+import * as MD from "../../../src/program/MarkdownParser";
+
 it("works", async () => {
     const content = await fs.readFile(path.join(__dirname, "./1.md"), "utf8");
-    const r = parseMarkdown(content);
+    const r = MD.parse(content);
     assertIsRight(r);
     expect(r.right.value).toMatchInlineSnapshot(`
         Array [

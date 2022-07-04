@@ -49,7 +49,7 @@ type InputLanguageBrand = {
 
 export const InputLanguage = t.brand(
     t.string,
-    (it): it is t.Branded<string, InputLanguageBrand> => true,
+    (_it): _it is t.Branded<string, InputLanguageBrand> => true,
     "InputLanguage"
 );
 
@@ -61,7 +61,7 @@ type OutputLanguageBrand = {
 
 export const OutputLanguage = t.brand(
     t.string,
-    (it): it is t.Branded<string, OutputLanguageBrand> => true,
+    (_it): _it is t.Branded<string, OutputLanguageBrand> => true,
     "OutputLanguage"
 );
 
@@ -159,7 +159,7 @@ const named: P.Parser<string, Named> = pipe(
 
 const argument = P.either<string, Argument>(named, () => flag);
 
-const LanguageP = pipe(
+export const LanguageP = pipe(
     P.manyTill(
         //
         P.item<string>(),
@@ -189,7 +189,7 @@ const EvalP = pipe(
     P.bind("evalStr", () => S.string("eval"))
 );
 
-const InfoStringP = pipe(
+export const InfoStringP = pipe(
     //
     EvalP,
     P.bind("args", () => P.many(whitespaceSurrounded(argument))),

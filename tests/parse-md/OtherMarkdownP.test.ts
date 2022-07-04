@@ -1,4 +1,4 @@
-import { OtherMarkdownP } from "../../src/parse-md";
+import { OtherMarkdownP } from "../../src/program/MarkdownParser";
 import { runRight } from "./utils";
 
 const run = runRight(OtherMarkdownP);

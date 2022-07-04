@@ -1,8 +1,8 @@
-import { getInfoStringLanguage } from "../../src/parse-info-string";
+import * as InfoString from "../../src/program/InfoStringParser";
 
 const str1 = `ts a b c`;
 it("str1", () => {
-    expect(getInfoStringLanguage(str1)).toMatchInlineSnapshot(`
+    expect(InfoString.getLanguage(str1)).toMatchInlineSnapshot(`
         Object {
           "_tag": "Some",
           "value": "ts",
@@ -12,7 +12,7 @@ it("str1", () => {
 
 const str2 = ``;
 it("str2", () => {
-    expect(getInfoStringLanguage(str2)).toMatchInlineSnapshot(`
+    expect(InfoString.getLanguage(str2)).toMatchInlineSnapshot(`
         Object {
           "_tag": "None",
         }
@@ -21,7 +21,7 @@ it("str2", () => {
 
 const str3 = `   `;
 it("str3", () => {
-    expect(getInfoStringLanguage(str3)).toMatchInlineSnapshot(`
+    expect(InfoString.getLanguage(str3)).toMatchInlineSnapshot(`
         Object {
           "_tag": "None",
         }

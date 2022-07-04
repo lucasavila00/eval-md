@@ -1,11 +1,11 @@
 import snapshotDiff from "snapshot-diff";
-import { printMarkdown, parseMarkdown } from "../../src/parse-md";
+import * as MD from "../../src/program/MarkdownParser";
 import { assertIsRight } from "../utils";
 
 const reprint = (str: string) => {
-    const r = parseMarkdown(str);
+    const r = MD.parse(str);
     assertIsRight(r);
-    return printMarkdown(r.right.value);
+    return MD.print(r.right.value);
 };
 
 const empty = ``;
