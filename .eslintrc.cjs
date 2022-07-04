@@ -10,7 +10,7 @@ module.exports = {
         "plugin:jest/recommended",
     ],
     rules: {
-        // "no-console": "error",
+        "no-console": "error",
         "@typescript-eslint/no-unused-vars": 0,
         "@typescript-eslint/no-explicit-any": 0,
         "@typescript-eslint/ban-ts-comment": [

@@ -10,6 +10,7 @@ import * as Executor from "./Executor";
 import { Logger } from "./Logger";
 import { Settings } from "./Config";
 import { defaultLanguageCompilers } from "../lang-executors";
+import { Runner } from "./Runner";
 
 const CONFIG_FILE_NAME = "eval-md.json";
 
@@ -22,6 +23,7 @@ export type TransportedError = any;
 export type Capabilities = {
     readonly fileSystem: FileSystem;
     readonly logger: Logger;
+    readonly Runner: Runner;
 };
 
 export type Effect<A> = RTE.ReaderTaskEither<Capabilities, TransportedError, A>;
@@ -41,17 +43,18 @@ export type AstAndFile = {
 // files
 // -------------------------------------------------------------------------------------
 
-const readFile = (path: string): Effect<File> =>
+export const readFile = (path: string): Effect<File> =>
     pipe(
         RTE.ask<Capabilities>(),
         RTE.chainTaskEitherK(({ fileSystem }) => fileSystem.readFile(path)),
         RTE.map((content) => File(path, content, false))
     );
 
-const readFiles: (paths: ReadonlyArray<string>) => Effect<ReadonlyArray<File>> =
-    RA.traverse(RTE.ApplicativePar)(readFile);
+export const readFiles: (
+    paths: ReadonlyArray<string>
+) => Effect<ReadonlyArray<File>> = RA.traverse(RTE.ApplicativePar)(readFile);
 
-const writeFile = (file: File): Effect<void> => {
+export const writeFile = (file: File): Effect<void> => {
     const overwrite: Effect<void> = pipe(
         RTE.ask<Capabilities>(),
         RTE.chainTaskEitherK(({ fileSystem, logger }) =>
@@ -87,7 +90,7 @@ const writeFile = (file: File): Effect<void> => {
     );
 };
 
-const writeFiles: (files: ReadonlyArray<File>) => Effect<void> = flow(
+export const writeFiles: (files: ReadonlyArray<File>) => Effect<void> = flow(
     RA.traverse(RTE.ApplicativePar)(writeFile),
     RTE.map(constVoid)
 );

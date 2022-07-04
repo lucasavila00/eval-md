@@ -7,6 +7,7 @@ import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as RA from "fp-ts/lib/ReadonlyArray";
 import * as O from "fp-ts/lib/Option";
 import * as E from "fp-ts/lib/Either";
+
 // -------------------------------------------------------------------------------------
 // model
 // -------------------------------------------------------------------------------------
@@ -25,9 +26,9 @@ export type CompilerInputFile = {
     readonly file: File;
 };
 
-export type LanguageCompiler = {
+export type LanguageExecutor = {
     readonly language: InfoString.InputLanguage;
-    readonly compile: (
+    readonly execute: (
         files: ReadonlyArray<CompilerInputFile>
     ) => Core.Program<ReadonlyArray<ExecutedLanguageResult>>;
 };
@@ -119,7 +120,7 @@ export const run = (
             pipe(
                 env.settings.languageCompilers,
                 RTE.traverseArray((compiler) =>
-                    compiler.compile(compilerInputs(files, compiler.language))
+                    compiler.execute(compilerInputs(files, compiler.language))
                 )
             )
         ),

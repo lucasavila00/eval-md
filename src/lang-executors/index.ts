@@ -1,3 +1,3 @@
-import { typescriptLanguageCompiler } from "./typescript";
+import { typescriptLanguageExecutor } from "./typescript";
 
-export const defaultLanguageCompilers = [typescriptLanguageCompiler];
+export const defaultLanguageCompilers = [typescriptLanguageExecutor];
