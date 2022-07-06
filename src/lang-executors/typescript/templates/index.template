@@ -1,21 +1,46 @@
 {{##1##}}
 
 type GenDef = {
-    generator: () => Promise<any>;
+    generator: () => Promise<
+        {
+            content: any;
+            blockIndex: number;
+        }[]
+    >;
     source: string;
 };
 
-const stringifyFileResponse = (response: any) => {
-    return (response??[]).map((it:any) => {
-        if (it instanceof Error) {
-            return String(it);
+const stringifyFileResponse = (
+    response: {
+        content: any;
+        blockIndex: number;
+    }[]
+): {
+    content: any;
+    blockIndex: number;
+}[] => {
+    return response.map((it) => {
+        if (it.content instanceof Error) {
+            return {
+                blockIndex: it.blockIndex,
+                content: String(it.content),
+            };
         }
-        return JSON.stringify(it);
+        return {
+            blockIndex: it.blockIndex,
+            content: JSON.stringify(it.content),
+        };
     });
 };
 
 const main = async () => {
-    const response: Record<string, any[]> = {};
+    const response: Record<
+        string,
+        {
+            content: any;
+            blockIndex: number;
+        }[]
+    > = {};
     for (const def of generators) {
         response[def.source] = await def
             .generator()

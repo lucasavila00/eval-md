@@ -13,6 +13,7 @@ import * as MD from "../../program/MarkdownParser";
 import * as path from "path";
 import { Project, Node, SyntaxKind, SourceFile } from "ts-morph";
 import { FencedCodeBlock } from "../../program/MarkdownParser";
+import { ts } from "ts-morph";
 
 // -------------------------------------------------------------------------------------
 // model
@@ -30,7 +31,8 @@ type SpawnResult = ReadonlyRecord<
 // -------------------------------------------------------------------------------------
 
 const getAnnotatedSourceCode = (
-    refs: ReadonlyArray<Executor.CompilerInputFile>
+    refs: ReadonlyArray<Executor.CompilerInputFile>,
+    consumeEndOfBlock: boolean
 ): Program<ReadonlyArray<File>> => {
     return pipe(
         refs,
@@ -39,7 +41,7 @@ const getAnnotatedSourceCode = (
 
             const code = pipe(
                 ref.blocks,
-                RA.mapWithIndex((_index, block) => {
+                RA.mapWithIndex((index, block) => {
                     const opener = JSON.stringify(block.opener);
                     const header = `// start-eval-block ${opener}`;
                     const footer = `// end-eval-block`;
@@ -63,6 +65,33 @@ const getAnnotatedSourceCode = (
                             );
                         }
                     });
+
+                    if (consumeEndOfBlock) {
+                        const sts = sourceFile.getStatements();
+                        const last = sts[sts.length - 1];
+
+                        last.transform((traversal) => {
+                            if (
+                                ts.isExpressionStatement(traversal.currentNode)
+                            ) {
+                                return traversal.factory.createExpressionStatement(
+                                    traversal.factory.createCallExpression(
+                                        traversal.factory.createIdentifier(
+                                            "__consume"
+                                        ),
+                                        undefined,
+                                        [
+                                            traversal.factory.createNumericLiteral(
+                                                index
+                                            ),
+                                            traversal.currentNode.expression,
+                                        ]
+                                    )
+                                );
+                            }
+                            return traversal.currentNode;
+                        });
+                    }
 
                     return [header, sourceFile.getFullText(), footer].join(
                         "\n"
@@ -88,7 +117,7 @@ const getExecutableSourceCode = (
     refs: ReadonlyArray<Executor.CompilerInputFile>
 ): Program<ReadonlyArray<File>> =>
     pipe(
-        getAnnotatedSourceCode(refs),
+        getAnnotatedSourceCode(refs, true),
         RTE.map(
             RA.map((it) =>
                 File(getExecFileName(it, "exec.ts"), it.content, true)
@@ -169,7 +198,7 @@ const toPrint = (
     refs: ReadonlyArray<Executor.CompilerInputFile>
 ): Program<ReadonlyArray<FileBlocks>> =>
     pipe(
-        getAnnotatedSourceCode(refs),
+        getAnnotatedSourceCode(refs, false),
         RTE.chain((it) => (_deps) => async () => {
             const project = new Project({
                 tsConfigFilePath: "tsconfig.json",
@@ -272,7 +301,6 @@ const spawnTsNode = (): Program<SpawnResult> =>
                     lines.push(iterator);
                 }
             }
-
             return JSON.parse(lines.join("\n"));
         })
     );

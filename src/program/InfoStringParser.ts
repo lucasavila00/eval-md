@@ -66,6 +66,8 @@ export const OutputLanguage = t.brand(
 );
 
 export type OutputLanguage = t.TypeOf<typeof OutputLanguage>;
+
+export const DefaultOutputLanguage = "json" as OutputLanguage;
 // -------------------------------------------------------------------------------------
 // instances
 // -------------------------------------------------------------------------------------

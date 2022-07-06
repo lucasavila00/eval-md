@@ -81,27 +81,28 @@ const printBlock: BlockTransformer = (block, infoString, results) => {
     const printLang = infoString.named[
         "print"
     ] as InfoString.OutputLanguage | null;
-    if (printLang != null) {
-        console.error(printLang, results);
-        return pipe(
-            results,
-            RTE.traverseArray((it) => transformPrintedValue(it, printLang)),
-            RTE.map(
-                RA.map((it) =>
-                    MD.FencedCodeBlock(
-                        it.content,
-                        MD.FenceOpener(
-                            block.opener.ticks,
-                            it.infoString,
-                            block.opener.precedingSpaces
-                        )
+
+    return pipe(
+        results,
+        RTE.traverseArray((it) =>
+            transformPrintedValue(
+                it,
+                printLang ?? InfoString.DefaultOutputLanguage
+            )
+        ),
+        RTE.map(
+            RA.map((it) =>
+                MD.FencedCodeBlock(
+                    it.content,
+                    MD.FenceOpener(
+                        block.opener.ticks,
+                        it.infoString,
+                        block.opener.precedingSpaces
                     )
                 )
             )
-        );
-    }
-
-    return RTE.of([]);
+        )
+    );
 };
 
 const transformEvalBlock: BlockTransformer = (block, infoString, results) =>
@@ -123,14 +124,23 @@ const transformEvalBlock: BlockTransformer = (block, infoString, results) =>
 export const transform = (
     ast: MD.AST,
     execResult: ReadonlyArray<Executor.Execution>
-): Core.Program<MD.AST> =>
-    pipe(
+): Core.Program<MD.AST> => {
+    let index = 0;
+    return pipe(
         ast,
-        RA.mapWithIndex((index, block) => {
+        RA.map((block) => {
             if (
                 block._tag === "FencedCodeBlock" &&
                 InfoString.isEval(block.opener.infoString)
             ) {
+                const blockResults = pipe(
+                    execResult,
+                    RA.chain((it) => it.results),
+                    RA.filter((it) => it.blockIndex === index)
+                );
+
+                index++;
+
                 return pipe(
                     InfoString.parse(block.opener.infoString),
                     RTE.fromEither,
@@ -138,11 +148,7 @@ export const transform = (
                         transformEvalBlock(
                             block,
                             infoString.value,
-                            pipe(
-                                execResult,
-                                RA.chain((it) => it.results),
-                                RA.filter((it) => it.blockIndex === index)
-                            )
+                            blockResults
                         )
                     )
                 );
@@ -152,3 +158,4 @@ export const transform = (
         RTE.sequenceArray,
         RTE.map(RA.flatten)
     );
+};
