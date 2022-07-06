@@ -17,8 +17,9 @@ export type BlockExecutionResult = {
     readonly content: string;
 };
 export type ExecutedLanguageResult = {
-    readonly file: File;
+    readonly inputFile: File;
     readonly results: ReadonlyArray<BlockExecutionResult>;
+    readonly transformedBlocks: ReadonlyArray<MD.FencedCodeBlock>;
 };
 
 export type CompilerInputFile = {
@@ -75,6 +76,26 @@ const compilerInputs = (
 // validations
 // -------------------------------------------------------------------------------------
 
+const assertBlockHasCompiler = (
+    it: MD.FencedCodeBlock,
+    executors: readonly LanguageExecutor[]
+): E.Either<Core.TransportedError, void> =>
+    pipe(
+        InfoString.getLanguage(it.opener.infoString),
+        O.fold(
+            () => E.of(void 0),
+            (lang) => {
+                if (!InfoString.isEval(it.opener.infoString)) {
+                    return E.of(void 0);
+                }
+                if (executors.some((it) => it.language === lang)) {
+                    return E.of(void 0);
+                }
+                return E.left(`Missing compiler for input language: ${lang}`);
+            }
+        )
+    );
+
 const assertAllPrintBlocksHaveCompilers = (
     files: ReadonlyArray<Core.AstAndFile>
 ): Core.Program<void> =>
@@ -85,20 +106,7 @@ const assertAllPrintBlocksHaveCompilers = (
                 files,
                 RA.chain((it) => fencedCodeBlocks(it.ast)),
                 RA.map((it) =>
-                    pipe(
-                        InfoString.getLanguage(it.opener.infoString),
-                        O.fold(
-                            () => E.of(void 0),
-                            (lang) =>
-                                env.settings.languageCompilers.some(
-                                    (it) => it.language === lang
-                                )
-                                    ? E.of(void 0)
-                                    : E.left(
-                                          `Missing compiler for input language: ${lang}`
-                                      )
-                        )
-                    )
+                    assertBlockHasCompiler(it, env.settings.languageCompilers)
                 ),
                 E.sequenceArray,
                 E.map((_arr) => void 0)
@@ -132,7 +140,9 @@ export const run = (
                     ...reference,
                     results: pipe(
                         compilations,
-                        RA.filter((it) => it.file.path === reference.file.path),
+                        RA.filter(
+                            (it) => it.inputFile.path === reference.file.path
+                        ),
                         RA.chain((it) => it.results)
                     ),
                 }))

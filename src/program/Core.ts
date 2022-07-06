@@ -237,11 +237,10 @@ const parseFiles = (
 // -------------------------------------------------------------------------------------
 
 const getMarkdownFiles = (
-    modules: ReadonlyArray<AstAndFile>,
     execResults: ReadonlyArray<Executor.Execution>
 ): Program<ReadonlyArray<File>> =>
     pipe(
-        modules,
+        execResults,
         RTE.traverseArray((it) =>
             pipe(
                 Transformer.transform(it.ast, execResults),
@@ -302,9 +301,7 @@ export const main: Effect<void> = pipe(
                     RTE.bindTo("read"),
                     RTE.bind("parse", (acc) => parseFiles(acc.read)),
                     RTE.bind("exec", (acc) => Executor.run(acc.parse)),
-                    RTE.bind("md", (acc) =>
-                        getMarkdownFiles(acc.parse, acc.exec)
-                    ),
+                    RTE.bind("md", (acc) => getMarkdownFiles(acc.exec)),
                     RTE.bind("write", (acc) => writeMarkdownFiles(acc.md)),
                     RTE.map((_it) => void 0)
                 );

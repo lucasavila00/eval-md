@@ -16,6 +16,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@ts-morph/bootstrap": "^0.16.0",
         "fp-ts": "^2.12.1",
         "fs-extra": "^10.1.0",
         "glob": "^8.0.3",
