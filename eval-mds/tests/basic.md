@@ -48,18 +48,27 @@ throw new Error("...");
 
 Eval blocks can be meta.
 
-```ts eval --meta
+```ts --meta
 // some code
 ```
 
 It evaluates a block of code from a recognized language that calls eval.
 
-```ts eval --meta
+```ts --meta
 const add1 = (it: number) => it + 1;
 ```
 
 It handles printing values from the evaluated code, that will be printed in the generated markdown.
 
-```ts eval --print=json --meta
+```ts --print=json --meta
 add1(3);
+```
+
+```ts eval
+console.error(123);
+import * as fs from "fs";
+console.error(fs);
+
+const add = (it: number): number => it + 1;
+add(123);
 ```

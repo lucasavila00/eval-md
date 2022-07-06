@@ -10,6 +10,7 @@ import * as Core from "./program/Core";
 import { FileSystem } from "./program/FileSystem";
 import { Logger } from "./program/Logger";
 import { pipe } from "fp-ts/lib/function";
+import { Runner } from "./program/Runner";
 
 // -------------------------------------------------------------------------------------
 // utils
@@ -43,6 +44,7 @@ export const exit: (program: TE.TaskEither<string, void>) => T.Task<void> =
 const capabilities: Core.Capabilities = {
     fileSystem: FileSystem,
     logger: Logger,
+    runner: Runner,
 };
 
 /**

@@ -1,12 +1,12 @@
 {{##1##}}
 
 type GenDef = {
-    generator: () => Promise<any[]>;
+    generator: () => Promise<any>;
     source: string;
 };
 
-const stringifyFileResponse = (response: any[]) => {
-    return response.map((it) => {
+const stringifyFileResponse = (response: any) => {
+    return (response??[]).map((it:any) => {
         if (it instanceof Error) {
             return String(it);
         }

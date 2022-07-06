@@ -29,41 +29,71 @@ type SpawnResult = ReadonlyRecord<
 // transformer
 // -------------------------------------------------------------------------------------
 
-// // todo improve
+const getAnnotatedSourceCode = (
+    refs: ReadonlyArray<Executor.CompilerInputFile>
+): Program<ReadonlyArray<File>> => {
+    return pipe(
+        refs,
+        RA.map((ref) => {
+            const imports: string[] = [];
+
+            const code = pipe(
+                ref.blocks,
+                RA.mapWithIndex((_index, block) => {
+                    const opener = JSON.stringify(block.opener);
+                    const header = `// start-eval-block ${opener}`;
+                    const footer = `// end-eval-block`;
+
+                    const project = new Project();
+                    const sourceFile = project.createSourceFile(
+                        "it.ts",
+                        block.content
+                    );
+
+                    sourceFile.forEachChild((node) => {
+                        if (Node.isImportDeclaration(node)) {
+                            imports.push(node.getFullText());
+                            node.replaceWithText(
+                                node
+                                    .getFullText()
+                                    .trim()
+                                    .split("\n")
+                                    .map((it) => "// eval-md-hoisted " + it)
+                                    .join("\n")
+                            );
+                        }
+                    });
+
+                    return [header, sourceFile.getFullText(), footer].join(
+                        "\n"
+                    );
+                })
+            );
+            const content = [imports, codeTemplate(code.join("\n"))].join("\n");
+            return File(ref.file.path, content, false);
+        }),
+        RTE.of
+    );
+};
+
+const changeExtension = (file: string, extension: string): string => {
+    const basename = path.basename(file, path.extname(file));
+    return path.join(path.dirname(file), basename + extension);
+};
+
 const getExecFileName = (file: File, language: string): string =>
-    file.path.replace(".md", "." + language);
+    changeExtension(file.path, "." + language);
 
 const getExecutableSourceCode = (
     refs: ReadonlyArray<Executor.CompilerInputFile>
 ): Program<ReadonlyArray<File>> =>
     pipe(
-        refs,
-        RA.map((ref) =>
-            File(
-                getExecFileName(ref.file, "exec.ts"),
-                pipe(
-                    ref.blocks,
-                    RA.map((block) => block.content),
-                    (it) => it.join("\n"),
-                    codeTemplate
-                ),
-                true
+        getAnnotatedSourceCode(refs),
+        RTE.map(
+            RA.map((it) =>
+                File(getExecFileName(it, "exec.ts"), it.content, true)
             )
-        ),
-        RTE.of
-    );
-
-const hoistImports = (
-    files: ReadonlyArray<File>
-): Program<ReadonlyArray<File>> => RTE.of(files);
-
-const getExecutableFiles = (
-    refs: ReadonlyArray<Executor.CompilerInputFile>
-): Program<ReadonlyArray<File>> =>
-    pipe(
-        //
-        getExecutableSourceCode(refs),
-        RTE.chain(hoistImports)
+        )
     );
 
 const getIndex = (
@@ -75,11 +105,17 @@ const getIndex = (
             const imports = refs
                 .map((it) => it.file)
                 .map((it) => it.path.replace(env.settings.srcDir, "."))
-                .map((it) => it.replace(".ts", ""))
+                .map((it) => it.replace(".md", ".exec"))
                 .map((it, idx) => `import g${idx} from '${it}';`)
                 .join("\n");
 
-            const generators = "generators";
+            const generators = refs
+                .map(
+                    (it, idx) =>
+                        `{generator: g${idx}, source: "${it.file.path}", }`
+                )
+                .join(",");
+
             return File(
                 path.join(env.settings.srcDir, "index.exec.ts"),
                 indexTemplate(
@@ -96,41 +132,13 @@ const getExecutableFilesAndIndex = (
     pipe(
         getIndex(files),
         RTE.bindTo("index"),
-        RTE.bind("fs", () => getExecutableFiles(files)),
+        RTE.bind("fs", () => getExecutableSourceCode(files)),
         RTE.map((it) => [it.index, ...it.fs])
     );
 
 // -------------------------------------------------------------------------------------
 // source-printer
 // -------------------------------------------------------------------------------------
-console.error("both calls to codeTemplate should hoist imports");
-console.error(
-    "exec should use ts-morph version? it's simple to re-parse the code... no need to come from blocks exactly"
-);
-const getAnnotatedSourceCode = (
-    refs: ReadonlyArray<Executor.CompilerInputFile>
-): Program<ReadonlyArray<File>> =>
-    pipe(
-        refs,
-        RA.map((ref) =>
-            File(
-                getExecFileName(ref.file, "ts"),
-                pipe(
-                    ref.blocks,
-                    RA.mapWithIndex((_index, block) => {
-                        const opener = JSON.stringify(block.opener);
-                        const header = `// start-eval-block ${opener}`;
-                        const footer = `// end-eval-block`;
-                        return [header, block.content, footer].join("\n");
-                    }),
-                    (it) => it.join("\n"),
-                    codeTemplate
-                ),
-                true
-            )
-        ),
-        RTE.of
-    );
 
 const addInlayParameters = (sourceFile: SourceFile) => {
     sourceFile.forEachDescendant((node) => {
@@ -152,7 +160,6 @@ const addInlayParameters = (sourceFile: SourceFile) => {
                 }
             });
         }
-        return undefined; // return a falsy value or no value to continue iterating
     });
 };
 
@@ -169,11 +176,13 @@ const toPrint = (
             });
 
             for (const f of it) {
-                project.createSourceFile(f.path, f.content);
+                project.createSourceFile(getExecFileName(f, "ts"), f.content);
             }
 
             const newFiles = it.map((f) => {
-                const sourceFile = project.getSourceFile(f.path);
+                const sourceFile = project.getSourceFile(
+                    getExecFileName(f, "ts")
+                );
 
                 if (sourceFile == null) {
                     throw new Error("sf not found");
@@ -209,6 +218,13 @@ const toPrint = (
 
                 return pipe(
                     acc,
+                    RA.map(
+                        RA.map((it) =>
+                            it.startsWith("// eval-md-hoisted ")
+                                ? it.replace("// eval-md-hoisted ", "")
+                                : it
+                        )
+                    ),
                     RA.map(([head, ...tail]) =>
                         FencedCodeBlock(
                             tail.join("\n"),
@@ -224,8 +240,42 @@ const toPrint = (
 // runner
 // -------------------------------------------------------------------------------------
 
-const spawnTsNode = (): Program<SpawnResult> => RTE.of(1 as any);
+const spawnTsNode = (): Program<SpawnResult> =>
+    pipe(
+        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.chainFirst(({ logger }) =>
+            RTE.fromTaskEither(logger.debug("Type checking examples..."))
+        ),
+        RTE.chainTaskEitherK(({ settings, runner: Runner }) => {
+            const command =
+                process.platform === "win32" ? "ts-node.cmd" : "ts-node";
+            const executablePath = path.join(
+                process.cwd(),
+                settings.srcDir,
+                "index.exec.ts"
+            );
+            return Runner.run(command, executablePath);
+        }),
+        RTE.map((value) => {
+            let capturing = false;
+            const lines: string[] = [];
+            for (const iterator of value.split("\n")) {
+                if (iterator.startsWith("##eval-md-start##")) {
+                    capturing = true;
+                    continue;
+                }
+                if (iterator.startsWith("##eval-md-end##")) {
+                    capturing = false;
+                    break;
+                }
+                if (capturing) {
+                    lines.push(iterator);
+                }
+            }
 
+            return JSON.parse(lines.join("\n"));
+        })
+    );
 // -------------------------------------------------------------------------------------
 // executor
 // -------------------------------------------------------------------------------------
@@ -235,7 +285,6 @@ export const typescriptLanguageExecutor: Executor.LanguageExecutor = {
     execute: (refs) =>
         pipe(
             getExecutableFilesAndIndex(refs),
-            // at this stage we can use morph-ts
             RTE.chainW((it) => Core.writeFiles(it)),
             RTE.chain(spawnTsNode),
             RTE.bindTo("execResult"),

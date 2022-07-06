@@ -24,7 +24,7 @@ export type TransportedError = any;
 export type Capabilities = {
     readonly fileSystem: FileSystem;
     readonly logger: Logger;
-    readonly Runner: Runner;
+    readonly runner: Runner;
 };
 
 export type Effect<A> = RTE.ReaderTaskEither<Capabilities, TransportedError, A>;
@@ -242,13 +242,13 @@ const getMarkdownFiles = (
 ): Program<ReadonlyArray<File>> =>
     pipe(
         execResults,
-        RTE.traverseArray((it) => {
+        RTE.traverseArray((fileRef) => {
             let index = 0;
             return pipe(
-                it.ast.map((item) => {
+                fileRef.ast.map((item) => {
                     if (item._tag === "FencedCodeBlock") {
                         if (InfoString.isEval(item.opener.infoString)) {
-                            const ret = it.transformedBlocks[index];
+                            const ret = fileRef.transformedBlocks[index];
                             index++;
                             return ret;
                         }
@@ -259,7 +259,7 @@ const getMarkdownFiles = (
                 RTE.chainReaderK(
                     (content) => (env) =>
                         File(
-                            it.file.path.replace(
+                            fileRef.file.path.replace(
                                 env.settings.srcDir,
                                 env.settings.outDir
                             ),
