@@ -74,14 +74,10 @@ It handles printing values from the evaluated code, that will be printed in the 
 
 ````md
 ```ts eval --print=json --meta
-add1(3);
+add1(/* it: */ 3);
 ```
 ````
 
 ```ts
-add1(3);
-```
-
-```json
-4
+add1(/* it: */ 3);
 ```

@@ -82,6 +82,7 @@ const printBlock: BlockTransformer = (block, infoString, results) => {
         "print"
     ] as InfoString.OutputLanguage | null;
     if (printLang != null) {
+        console.error(printLang, results);
         return pipe(
             results,
             RTE.traverseArray((it) => transformPrintedValue(it, printLang)),

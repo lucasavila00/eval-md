@@ -1,8 +1,3 @@
 export default async function main() {
-    const __arr: any[] = [];
-    const __consume = (it: any) => __arr.push(it);
-    
-    {{##1##}}
-
-    return __arr;
+{{##1##}}
 }

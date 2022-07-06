@@ -36,6 +36,7 @@ export type LanguageExecutor = {
 
 export type Execution = Core.AstAndFile & {
     readonly results: ReadonlyArray<BlockExecutionResult>;
+    readonly transformedBlocks: ReadonlyArray<MD.FencedCodeBlock>;
 };
 
 // -------------------------------------------------------------------------------------
@@ -144,6 +145,13 @@ export const run = (
                             (it) => it.inputFile.path === reference.file.path
                         ),
                         RA.chain((it) => it.results)
+                    ),
+                    transformedBlocks: pipe(
+                        compilations,
+                        RA.filter(
+                            (it) => it.inputFile.path === reference.file.path
+                        ),
+                        RA.chain((it) => it.transformedBlocks)
                     ),
                 }))
             )

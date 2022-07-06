@@ -5,6 +5,7 @@ import * as path from "path";
 import * as RA from "fp-ts/ReadonlyArray";
 import * as TE from "fp-ts/TaskEither";
 import * as MD from "./MarkdownParser";
+import * as InfoString from "./InfoStringParser";
 import * as Transformer from "./Transformer";
 import * as Executor from "./Executor";
 import { Logger } from "./Logger";
@@ -241,9 +242,20 @@ const getMarkdownFiles = (
 ): Program<ReadonlyArray<File>> =>
     pipe(
         execResults,
-        RTE.traverseArray((it) =>
-            pipe(
-                Transformer.transform(it.ast, execResults),
+        RTE.traverseArray((it) => {
+            let index = 0;
+            return pipe(
+                it.ast.map((item) => {
+                    if (item._tag === "FencedCodeBlock") {
+                        if (InfoString.isEval(item.opener.infoString)) {
+                            const ret = it.transformedBlocks[index];
+                            index++;
+                            return ret;
+                        }
+                    }
+                    return item;
+                }),
+                (t) => Transformer.transform(t, execResults),
                 RTE.chainReaderK(
                     (content) => (env) =>
                         File(
@@ -255,8 +267,8 @@ const getMarkdownFiles = (
                             true
                         )
                 )
-            )
-        )
+            );
+        })
     );
 
 const writeMarkdownFiles = (files: ReadonlyArray<File>): Program<void> =>
