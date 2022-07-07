@@ -1,3 +1,5 @@
+import * as util from "util";
+
 export default async function main(): Promise<
     {
         content: any;
@@ -8,13 +10,23 @@ const __arr: {
     content: any;
     blockIndex: number;
 }[] = [];
-const __consume = (blockIndex: number, content: any) =>
-    __arr.push({ content, blockIndex });
+const __consume = (
+    outLanguage: string,
+    blockIndex: number,
+    content: any
+) => {
+    if (outLanguage === "jsonjs") {
+        __arr.push({ content: util.inspect(content), blockIndex });
+    } else {
+        __arr.push({ content: JSON.stringify(content), blockIndex });
+    }
+};
 {{##0##}}
 // prevent "is declared but its value is never read."
-if (Math.log(1)>0) {
-    String(__consume)
-    String(__meta)
+if (Math.log(1) > 0) {
+    String(__consume);
+    String(__meta);
+    String(util);
 }
 return __arr;
 }

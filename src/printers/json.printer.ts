@@ -2,17 +2,22 @@ import * as Transformer from "../program/Transformer";
 import * as InfoString from "../program/InfoStringParser";
 import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as O from "fp-ts/lib/Option";
+import * as prettier from "prettier";
 
 export const jsonPrinter: Transformer.OutputTransformer = {
     language: "json" as InfoString.OutputLanguage,
-    print: (result) =>
-        RTE.of(
+    print: (result) => {
+        const inspect =
+            result.content == null
+                ? String(result.content)
+                : JSON.stringify(JSON.parse(result.content));
+        const pretty = prettier.format(inspect, { filepath: "it.json" }).trim();
+
+        return RTE.of(
             O.some({
-                content:
-                    result.content == null
-                        ? String(result.content)
-                        : JSON.stringify(JSON.parse(result.content)),
+                content: pretty,
                 infoString: "json",
             })
-        ),
+        );
+    },
 };

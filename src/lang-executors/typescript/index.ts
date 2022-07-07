@@ -65,7 +65,9 @@ const getAnnotatedSourceCode =
 
                         sourceFile.forEachChild((node) => {
                             if (Node.isImportDeclaration(node)) {
-                                imports.push(node.getFullText());
+                                if (!imports.includes(node.getFullText())) {
+                                    imports.push(node.getFullText());
+                                }
                                 node.replaceWithText(
                                     node
                                         .getFullText()
@@ -94,6 +96,21 @@ const getAnnotatedSourceCode =
                                             ),
                                             undefined,
                                             [
+                                                traversal.factory.createStringLiteral(
+                                                    pipe(
+                                                        InfoString.parse(
+                                                            block.opener
+                                                                .infoString
+                                                        ),
+                                                        E.fold(
+                                                            () => "json",
+                                                            (it) =>
+                                                                it.value.named[
+                                                                    "out"
+                                                                ] ?? "json"
+                                                        )
+                                                    )
+                                                ),
                                                 traversal.factory.createNumericLiteral(
                                                     index
                                                 ),

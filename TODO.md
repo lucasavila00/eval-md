@@ -1,4 +1,6 @@
--   [ ] inlay specific tests
+-   [ ] import hoisting tests
+
+-   [ ] import de-duplication tests
 
 -   [ ] ts error handler
 

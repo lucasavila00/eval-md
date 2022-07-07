@@ -124,7 +124,7 @@ By default, values print as json.
 ```
 
 ```json
-{"a":1}
+{ "a": 1 }
 ```
 
 The output language can be overidden
@@ -156,7 +156,7 @@ The fenced code block can be hidden
 ````
 
 ```json
-{"hide":"me","n":579}
+{ "hide": "me", "n": 579 }
 ```
 
 The output can be hidden

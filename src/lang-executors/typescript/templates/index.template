@@ -1,50 +1,18 @@
 {{##0##}}
 
+type FileResult = {
+    content: any;
+    blockIndex: number;
+}[];
 type GenDef = {
-    generator: () => Promise<
-        {
-            content: any;
-            blockIndex: number;
-        }[]
-    >;
+    generator: () => Promise<FileResult>;
     source: string;
 };
 
-const stringifyFileResponse = (
-    response: {
-        content: any;
-        blockIndex: number;
-    }[]
-): {
-    content: any;
-    blockIndex: number;
-}[] => {
-    return response.map((it) => {
-        if (it.content instanceof Error) {
-            return {
-                blockIndex: it.blockIndex,
-                content: String(it.content),
-            };
-        }
-        return {
-            blockIndex: it.blockIndex,
-            content: JSON.stringify(it.content),
-        };
-    });
-};
-
 const main = async () => {
-    const response: Record<
-        string,
-        {
-            content: any;
-            blockIndex: number;
-        }[]
-    > = {};
+    const response: Record<string, FileResult> = {};
     for (const def of generators) {
-        response[def.source] = await def
-            .generator()
-            .then(stringifyFileResponse);
+        response[def.source] = await def.generator();
     }
     process.stdout.write("\n##eval-md-start##\n");
     process.stdout.write(JSON.stringify(response));
