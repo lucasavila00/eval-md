@@ -150,23 +150,31 @@ const getAnnotatedSourceCode =
                                             Node.isIdentifier(id1) &&
                                             id1.getText() === "console"
                                         ) {
-                                            id1.replaceWithText(
-                                                `__console(${index})`
-                                            );
+                                            id1.replaceWithText(`__console`);
                                         }
                                     }
                                 }
                             });
 
+                            const consoleBlockN = `__consoleBlock = ${index};`;
+
                             if (outLanguage === "error") {
                                 const try_ = "try {";
                                 const catch_ = `;__dnt=true;}catch(e){__consume("error",${index},e)};if(__dnt){throw new Error('did not throw')}`;
-                                return [try_, sourceFile.getFullText(), catch_];
+                                return [
+                                    consoleBlockN,
+                                    try_,
+                                    sourceFile.getFullText(),
+                                    catch_,
+                                ];
                             } else {
                                 const sts = sourceFile.getStatements();
                                 const last = sts[sts.length - 1];
                                 consumeLastStatement(last, outLanguage, index);
-                                return [sourceFile.getFullText()];
+                                return [
+                                    consoleBlockN,
+                                    sourceFile.getFullText(),
+                                ];
                             }
                         } else {
                             const opener = JSON.stringify(block.opener);

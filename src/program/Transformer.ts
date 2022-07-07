@@ -111,22 +111,20 @@ const transformPrintedValue = (
 
 const transformConsoleValue = (
     result: Executor.ConsoleExecutionResult
-): Core.Program<O.Option<BlockTransformationResult>> =>
-    RTE.of(
+): Core.Program<O.Option<BlockTransformationResult>> => {
+    return RTE.of(
         O.some({
             infoString: "#md#",
             content: "> " + result.level + " : " + JSON.parse(result.content),
         })
     );
+};
 const printBlock: BlockTransformer = (
     execBlock,
     _rawBlock,
     infoString,
     results
 ) => {
-    if (infoString.flags.includes("hideout")) {
-        return RTE.of([]);
-    }
     const printLang = infoString.named[
         "out"
     ] as InfoString.OutputLanguage | null;
@@ -143,10 +141,12 @@ const printBlock: BlockTransformer = (
         RA.sort(LanguageExecutionResultOrd),
         RTE.traverseArray((it) =>
             it._tag == "BlockExecutionResult"
-                ? transformPrintedValue(
-                      it,
-                      printLang ?? InfoString.DefaultOutputLanguage
-                  )
+                ? infoString.flags.includes("hideout")
+                    ? RTE.of(O.none)
+                    : transformPrintedValue(
+                          it,
+                          printLang ?? InfoString.DefaultOutputLanguage
+                      )
                 : transformConsoleValue(it)
         ),
         RTE.map(getPrintedBlocks),

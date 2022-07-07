@@ -9,7 +9,7 @@ type ConsoleExecutionResult = {
     readonly _tag: "ConsoleExecutionResult";
     readonly blockIndex: number;
     readonly content: string;
-    readonly level: "log" | "error" | "warn" | "info"|'debug';
+    readonly level: "log" | "error" | "warn" | "info" | "debug";
 };
 
 type Ret = BlockExecutionResult | ConsoleExecutionResult;
@@ -42,11 +42,12 @@ export default async function main(): Promise<Ret[]> {
             });
         }
     };
-    const __console = (blockIndex: number) => ({
+    let __consoleBlock = 0;
+    const __console = {
         log: (...content: any[]) => {
             __arr.push({
                 content: JSON.stringify(util.format(...content)),
-                blockIndex,
+                blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "log",
             });
@@ -54,7 +55,7 @@ export default async function main(): Promise<Ret[]> {
         error: (...content: any[]) => {
             __arr.push({
                 content: JSON.stringify(util.format(...content)),
-                blockIndex,
+                blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "error",
             });
@@ -62,7 +63,7 @@ export default async function main(): Promise<Ret[]> {
         warn: (...content: any[]) => {
             __arr.push({
                 content: JSON.stringify(util.format(...content)),
-                blockIndex,
+                blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "warn",
             });
@@ -70,7 +71,7 @@ export default async function main(): Promise<Ret[]> {
         info: (...content: any[]) => {
             __arr.push({
                 content: JSON.stringify(util.format(...content)),
-                blockIndex,
+                blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "info",
             });
@@ -78,12 +79,12 @@ export default async function main(): Promise<Ret[]> {
         debug: (...content: any[]) => {
             __arr.push({
                 content: JSON.stringify(util.format(...content)),
-                blockIndex,
+                blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "debug",
             });
         },
-    });
+    };
 {{##0##}}
     // prevent "is declared but its value is never read."
     if (Math.log(1) > 0) {
@@ -92,6 +93,7 @@ export default async function main(): Promise<Ret[]> {
         String(util);
         String(__dnt);
         String(__console);
+        String(__consoleBlock);
     }
     return __arr;
 }

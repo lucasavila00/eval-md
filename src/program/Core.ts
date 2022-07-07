@@ -127,16 +127,6 @@ const readSourceFiles: Program<ReadonlyArray<File>> = pipe(
 // config
 // -------------------------------------------------------------------------------------
 
-const tocTemplate = `
-<details open markdown="block">
-  <summary>
-    Table of contents
-  </summary>
-  {: .text-delta }
-1. TOC
-{:toc}
-</details>
-`;
 console.error("fix");
 const getDefaultSettings = (): Settings => ({
     languageCompilers: defaultLanguageCompilers,
@@ -147,7 +137,6 @@ const getDefaultSettings = (): Settings => ({
     runtimeMeta: {
         srcUrl: "https://github.com/lucasavila00/eval-md/tree/main/",
         docsUrl: "https://lucasavila00.github.io/eval-md/",
-        tocTemplate,
     },
 });
 

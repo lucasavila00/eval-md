@@ -22,22 +22,14 @@ console.log(/* message: */ "hi");
 
 > log : hi
 
-```json
-undefined
-```
-
 ```ts
 const fn = () => {
   console.log(/* message: */ "hi2");
 };
 ```
 
-> log : hi2
-
 ```ts
 fn();
 ```
 
-```json
-undefined
-```
+> log : hi2
