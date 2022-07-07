@@ -9,8 +9,6 @@ layout: default
 __meta.tocTemplate;
 ```
 
-# Inlay Hints
-
 ```ts eval --out=md --hide
 import { Anchor, text } from "../../src/md-writer";
 
@@ -21,7 +19,7 @@ text(
 );
 ```
 
-## Unary calls
+# Unary calls
 
 It adds inlay hints to identifiers.
 
@@ -40,7 +38,6 @@ nothing2.fn("abc");
 ```ts eval
 class AClass {
     constructor(_props: string) {}
-
     public aMethod = (_it: string) => void 0;
 }
 ```
@@ -57,7 +54,7 @@ It adds inlay hints to class methods.
 aClassInstance.aMethod("def");
 ```
 
-## N-ary calls
+# N-ary calls
 
 It adds inlay hints to n-ary calls to identifiers.
 
@@ -76,7 +73,6 @@ naryFnObj.fn("abc", 123, false);
 ```ts eval
 class AClass3 {
     constructor(_props: string, _props2: number, _props3: boolean) {}
-
     public aMethod3 = (_it: string, _it2: number, _it3: boolean) => void 0;
 }
 ```

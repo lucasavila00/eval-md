@@ -9,8 +9,6 @@ layout: default
 __meta.tocTemplate;
 ```
 
-# Printers
-
 ```ts eval --out=md --hide
 import { Anchor, text } from "../../src/md-writer";
 

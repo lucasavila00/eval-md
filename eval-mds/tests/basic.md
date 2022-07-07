@@ -9,8 +9,6 @@ layout: default
 __meta.tocTemplate;
 ```
 
-# Basic tests
-
 ```ts eval --out=md --hide
 import { Anchor, text } from "../../src/md-writer";
 
@@ -21,7 +19,7 @@ text(
 );
 ```
 
-## Not calling eval
+# Not calling eval
 
 It won't change or eval an unrecognized language.
 
@@ -47,7 +45,7 @@ throw new Error("...");
 throw new Error("...");
 ```
 
-## Calling eval
+# Calling eval
 
 Eval blocks can be meta. These tests make extensive use of this feature.
 
@@ -73,13 +71,10 @@ It prints inlay hints
 const nothing2 = () => nothing(123);
 ```
 
-```ts eval
-const add1 = (it: number) => it + 1;
-```
-
 It captures values from the evaluated code, that will be printed in the generated markdown.
 
 ```ts eval --meta
+const add1 = (it: number) => it + 1;
 add1(3);
 ```
 

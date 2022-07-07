@@ -16,11 +16,9 @@ layout: default
 </details>
 
 
-# Inlay Hints
-
 Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/inlay.md) to see the uncompiled source.
 
-## Unary calls
+# Unary calls
 
 It adds inlay hints to identifiers.
 
@@ -39,7 +37,6 @@ nothing2.fn(/* _it: */ "abc");
 ```ts
 class AClass {
   constructor(_props: string) {}
-
   public aMethod = (_it: string) => void 0;
 }
 ```
@@ -56,7 +53,7 @@ It adds inlay hints to class methods.
 aClassInstance.aMethod(/* _it: */ "def");
 ```
 
-## N-ary calls
+# N-ary calls
 
 It adds inlay hints to n-ary calls to identifiers.
 
@@ -75,7 +72,6 @@ naryFnObj.fn(/* _it: */ "abc", /* _it2: */ 123, /* _it3: */ false);
 ```ts
 class AClass3 {
   constructor(_props: string, _props2: number, _props3: boolean) {}
-
   public aMethod3 = (_it: string, _it2: number, _it3: boolean) => void 0;
 }
 ```

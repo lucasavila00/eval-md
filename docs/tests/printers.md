@@ -16,8 +16,6 @@ layout: default
 </details>
 
 
-# Printers
-
 Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/printers.md) to see the uncompiled source.
 
 ```ts

@@ -5,8 +5,8 @@ search_enabled: true
 
 # Aux links for the upper right navigation
 aux_links:
-    "sql-select-ts on GitHub":
-        - "https://github.com/lucasavila00/sql-select-ts"
+    "eval-md on GitHub":
+        - "https://github.com/lucasavila00/eval-md"
 
 plugins:
     - jekyll-remote-theme
