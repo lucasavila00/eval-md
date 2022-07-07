@@ -1,4 +1,4 @@
-import { LanguageP } from "../../src/parse-info-string";
+import { LanguageP } from "../../src/program/InfoStringParser";
 import { runRight } from "../parse-md/utils";
 
 const run = runRight(LanguageP);

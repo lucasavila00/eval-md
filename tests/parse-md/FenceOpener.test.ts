@@ -1,4 +1,4 @@
-import { FenceOpenerP } from "../../src/parse-md";
+import { FenceOpenerP } from "../../src/program/MarkdownParser";
 import { runRight } from "./utils";
 
 const run = runRight(FenceOpenerP);

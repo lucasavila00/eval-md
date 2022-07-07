@@ -2,15 +2,66 @@ import * as C from "parser-ts/char";
 import * as S from "parser-ts/string";
 import * as P from "parser-ts/Parser";
 import { flow, pipe } from "fp-ts/lib/function";
-import * as O from "fp-ts/lib/Option";
 import * as RA from "fp-ts/lib/ReadonlyArray";
-import {
-    MarkdownAST,
-    OtherMarkdown,
-    FencedCodeBlock,
-    FenceOpener,
-} from "./md-types";
 import { ParseResult } from "parser-ts/lib/ParseResult";
+import * as O from "fp-ts/lib/Option";
+
+// -------------------------------------------------------------------------------------
+// model
+// -------------------------------------------------------------------------------------
+
+export type OtherMarkdown = {
+    _tag: "OtherMarkdown";
+    content: string;
+};
+
+export type FenceOpener = {
+    _tag: "FenceOpener";
+    ticks: string;
+    infoString: string;
+    precedingSpaces: O.Option<string>;
+};
+export type FencedCodeBlock = {
+    _tag: "FencedCodeBlock";
+    content: string;
+    opener: FenceOpener;
+};
+
+export type AstNodes = OtherMarkdown | FencedCodeBlock;
+export type AST = ReadonlyArray<OtherMarkdown | FencedCodeBlock>;
+
+// -------------------------------------------------------------------------------------
+// constructors
+// -------------------------------------------------------------------------------------
+
+export const OtherMarkdown = (content: string): OtherMarkdown => ({
+    _tag: "OtherMarkdown",
+    content,
+});
+
+export const FenceOpener = (
+    ticks: string,
+    infoString: string,
+    precedingSpaces: O.Option<string>
+): FenceOpener => ({
+    _tag: "FenceOpener",
+    ticks,
+    infoString,
+    precedingSpaces,
+});
+
+export const FencedCodeBlock = (
+    content: string,
+    opener: FenceOpener
+): FencedCodeBlock => ({
+    _tag: "FencedCodeBlock",
+    content,
+    opener,
+});
+
+// -------------------------------------------------------------------------------------
+// parsers
+// -------------------------------------------------------------------------------------
 
 const StringEOF = pipe(
     P.eof<string>(),
@@ -29,21 +80,13 @@ const PrecedingFenceSpaces = pipe(
     )
 );
 
-const nChars = (it: number, char: string): string => {
-    let acc = "";
-    for (let index = 0; index < it; index++) {
-        acc += char;
-    }
-    return acc;
-};
-
 const FenceOpenerBuilder = (char: string) =>
     pipe(
         PrecedingFenceSpaces,
         P.bindTo("precedingSpaces"),
         P.bind("ticks", () =>
             pipe(
-                S.string(nChars(3, char)),
+                S.string(char.repeat(3)),
                 P.chain((it) =>
                     pipe(
                         S.many(C.char(char)),
@@ -117,7 +160,7 @@ export const FencedCodeBlockP = pipe(
                         it.opener.precedingSpaces.value.length
                     ) {
                         return line.replace(
-                            nChars(precedingSpacesOf(line), " "),
+                            " ".repeat(precedingSpacesOf(line)),
                             ""
                         );
                     }
@@ -156,7 +199,7 @@ export const OtherMarkdownP = pipe(
     P.map((it) => (it.length > 0 ? O.some(OtherMarkdown(it)) : O.none))
 );
 
-export const parser: P.Parser<string, MarkdownAST> = pipe(
+export const parser: P.Parser<string, AST> = pipe(
     OtherMarkdownP,
     P.bindTo("md"),
     P.bind("code", () => P.optional(FencedCodeBlockP)),
@@ -176,11 +219,15 @@ export const parser: P.Parser<string, MarkdownAST> = pipe(
     P.map(RA.flatten)
 );
 
+// -------------------------------------------------------------------------------------
+// helpers
+// -------------------------------------------------------------------------------------
+
 // add \n in the beginning to make codes able to parse
-export const parseMarkdown = (md: string): ParseResult<string, MarkdownAST> =>
+export const parse = (md: string): ParseResult<string, AST> =>
     S.run("\n" + md)(parser);
 
-export const printMarkdown = (it: MarkdownAST): string => {
+export const print = (it: AST): string => {
     let acc = "";
     for (const i of it) {
         switch (i._tag) {

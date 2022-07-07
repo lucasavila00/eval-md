@@ -1,4 +1,4 @@
-import { FencedCodeBlockP } from "../../src/parse-md";
+import { FencedCodeBlockP } from "../../src/program/MarkdownParser";
 import { runLeft, runRight } from "./utils";
 
 const run = runRight(FencedCodeBlockP);

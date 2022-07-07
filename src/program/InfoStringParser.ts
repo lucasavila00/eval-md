@@ -3,13 +3,18 @@ import * as P from "parser-ts/Parser";
 import * as S from "parser-ts/string";
 import * as O from "fp-ts/lib/Option";
 import * as E from "fp-ts/lib/Either";
-import { TransportedError } from "./types";
 import { ParseResult } from "parser-ts/lib/ParseResult";
 import * as C from "parser-ts/char";
 import * as A from "fp-ts/lib/Array";
 import * as R from "fp-ts/lib/Record";
 import * as MO from "fp-ts/lib/Monoid";
 import * as SM from "fp-ts/lib/Semigroup";
+import { TransportedError } from "./Core";
+import * as t from "io-ts";
+
+// -------------------------------------------------------------------------------------
+// model
+// -------------------------------------------------------------------------------------
 
 export type Argument = Flag | Named;
 
@@ -24,52 +29,92 @@ export type Named = {
     readonly value: string;
 };
 
-export const Flag = (value: string): Flag => ({ _tag: "Flag", value });
-
-export const Named = (name: string, value: string): Named => ({
-    _tag: "Named",
-    name,
-    value,
-});
 export type Args = {
     readonly flags: Array<string>;
     readonly named: Record<string, string>;
 };
+
+export type EvalInfoString = Args & {
+    readonly _tag: "EvalInfoString";
+    readonly language: string;
+};
+
+// -------------------------------------------------------------------------------------
+// codecs
+// -------------------------------------------------------------------------------------
+
+type InputLanguageBrand = {
+    readonly InputLanguage: unique symbol;
+};
+
+export const InputLanguage = t.brand(
+    t.string,
+    (_it): _it is t.Branded<string, InputLanguageBrand> => true,
+    "InputLanguage"
+);
+
+export type InputLanguage = t.TypeOf<typeof InputLanguage>;
+
+type OutputLanguageBrand = {
+    readonly OutputLanguage: unique symbol;
+};
+
+export const OutputLanguage = t.brand(
+    t.string,
+    (_it): _it is t.Branded<string, OutputLanguageBrand> => true,
+    "OutputLanguage"
+);
+
+export type OutputLanguage = t.TypeOf<typeof OutputLanguage>;
+
+export const DefaultOutputLanguage = "json" as OutputLanguage;
+// -------------------------------------------------------------------------------------
+// instances
+// -------------------------------------------------------------------------------------
 
 const monoidArgs: MO.Monoid<Args> = MO.struct({
     flags: A.getMonoid<string>(),
     named: R.getMonoid(SM.last<string>()),
 });
 
-export type InfoString = Args & {
-    readonly _tag: "InfoString";
-    readonly language: string;
-    readonly evalStr: string;
-};
-export const InfoString = (
+// -------------------------------------------------------------------------------------
+// constructors
+// -------------------------------------------------------------------------------------
+
+const EvalInfoString = (
     language: string,
-    evalStr: string,
     flags: Array<string>,
     named: Record<string, string>
-): InfoString => ({
-    _tag: "InfoString",
+): EvalInfoString => ({
+    _tag: "EvalInfoString",
     language,
-    evalStr,
     flags,
     named,
 });
 
-export const FlagArg = (value: string): Args => ({
+const Flag = (value: string): Flag => ({ _tag: "Flag", value });
+
+const Named = (name: string, value: string): Named => ({
+    _tag: "Named",
+    name,
+    value,
+});
+
+const FlagArg = (value: string): Args => ({
     flags: [value],
     named: {},
 });
 
-export const NamedArg = (name: string, value: string): Args => ({
+const NamedArg = (name: string, value: string): Args => ({
     flags: [],
     named: { [name]: value },
 });
 
-export const fold =
+// -------------------------------------------------------------------------------------
+// destructors
+// -------------------------------------------------------------------------------------
+
+const fold =
     <R>(
         onFlag: (value: string) => R,
         onNamed: (name: string, value: string) => R
@@ -86,6 +131,10 @@ export const fold =
                 return absurd<R>(a);
         }
     };
+
+// -------------------------------------------------------------------------------------
+// parsers
+// -------------------------------------------------------------------------------------
 
 const whitespaceSurrounded = P.surroundedBy(S.spaces);
 
@@ -151,11 +200,15 @@ export const InfoStringP = pipe(
             it.args,
             A.foldMap(monoidArgs)(fold(FlagArg, NamedArg))
         );
-        return InfoString(it.language, it.evalStr, monoid.flags, monoid.named);
+        return EvalInfoString(it.language, monoid.flags, monoid.named);
     })
 );
 
-export const getInfoStringLanguage = (infoString: string): O.Option<string> =>
+// -------------------------------------------------------------------------------------
+// helpers
+// -------------------------------------------------------------------------------------
+
+export const getLanguage = (infoString: string): O.Option<string> =>
     pipe(
         LanguageP,
         S.run(infoString),
@@ -167,7 +220,7 @@ export const getInfoStringLanguage = (infoString: string): O.Option<string> =>
         )
     );
 
-export const isEvalInfoString = (infoString: string): boolean =>
+export const isEval = (infoString: string): boolean =>
     pipe(
         EvalP,
         S.run(infoString),
@@ -177,7 +230,7 @@ export const isEvalInfoString = (infoString: string): boolean =>
         )
     );
 
-export const parseInfoString = (
+export const parse = (
     infoString: string
-): ParseResult<TransportedError, InfoString> =>
+): ParseResult<TransportedError, EvalInfoString> =>
     pipe(InfoStringP, S.run(infoString));

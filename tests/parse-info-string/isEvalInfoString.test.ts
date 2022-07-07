@@ -1,13 +1,13 @@
-import { isEvalInfoString } from "../../src/parse-info-string";
+import * as InfoString from "../../src/program/InfoStringParser";
 
 it("works", () => {
-    expect(isEvalInfoString("")).toBe(false);
-    expect(isEvalInfoString("ts")).toBe(false);
-    expect(isEvalInfoString("ts ")).toBe(false);
-    expect(isEvalInfoString("ts eva")).toBe(false);
-    expect(isEvalInfoString("ts eva l")).toBe(false);
-    expect(isEvalInfoString("ts eval")).toBe(true);
-    expect(isEvalInfoString("ts eval\n")).toBe(true);
-    expect(isEvalInfoString("ts eval ")).toBe(true);
-    expect(isEvalInfoString("ts eval abc")).toBe(true);
+    expect(InfoString.isEval("")).toBe(false);
+    expect(InfoString.isEval("ts")).toBe(false);
+    expect(InfoString.isEval("ts ")).toBe(false);
+    expect(InfoString.isEval("ts eva")).toBe(false);
+    expect(InfoString.isEval("ts eva l")).toBe(false);
+    expect(InfoString.isEval("ts eval")).toBe(true);
+    expect(InfoString.isEval("ts eval\n")).toBe(true);
+    expect(InfoString.isEval("ts eval ")).toBe(true);
+    expect(InfoString.isEval("ts eval abc")).toBe(true);
 });
