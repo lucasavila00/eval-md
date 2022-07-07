@@ -11,9 +11,10 @@ type GenDef = {
 
 const main = async () => {
     const response: Record<string, FileResult> = {};
-    for (const def of generators) {
-        response[def.source] = await def.generator();
-    }
+    const results = await Promise.all(generators.map(it => it.generator()))
+    generators.forEach((it, idx) => {
+        response[it.source] = results[idx]
+    })
     process.stdout.write("\n##eval-md-start##\n");
     process.stdout.write(JSON.stringify(response));
     process.stdout.write("\n##eval-md-end##\n");

@@ -245,7 +245,10 @@ const parseFiles = (
         RTE.chainFirst(({ logger }) =>
             RTE.fromTaskEither(logger.debug("Parsing files..."))
         ),
-        RTE.chain(() => parse)
+        RTE.chain(() => parse),
+        RTE.chainFirst(
+            (_it) => (deps) => deps.logger.debug("Finished parsing files...")
+        )
     );
 };
 
@@ -298,18 +301,18 @@ const getMarkdownFiles = (
 const writeMarkdownFiles = (files: ReadonlyArray<File>): Program<void> =>
     pipe(
         RTE.ask<Environment, string>(),
-        RTE.chainFirst<Environment, string, Environment, void>(
-            ({ fileSystem, logger, settings }) => {
-                const outPattern = path.join(settings.outDir, "**/*.ts.md");
-                return pipe(
-                    logger.debug(
-                        `Cleaning up docs folder: deleting ${outPattern}`
-                    ),
-                    TE.chain(() => fileSystem.remove(outPattern)),
-                    RTE.fromTaskEither
-                );
-            }
-        ),
+        // RTE.chainFirst<Environment, string, Environment, void>(
+        //     ({ fileSystem, logger, settings }) => {
+        //         const outPattern = path.join(settings.outDir, "**/*.ts.md");
+        //         return pipe(
+        //             logger.debug(
+        //                 `Cleaning up docs folder: deleting ${outPattern}`
+        //             ),
+        //             TE.chain(() => fileSystem.remove(outPattern)),
+        //             RTE.fromTaskEither
+        //         );
+        //     }
+        // ),
         RTE.chainTaskEitherK((C) =>
             pipe(
                 C.logger.debug("Writing markdown files..."),

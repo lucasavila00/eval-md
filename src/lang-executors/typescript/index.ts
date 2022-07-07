@@ -18,6 +18,7 @@ import {
     SourceFile,
     CallExpression,
     NewExpression,
+    ImportDeclaration,
 } from "ts-morph";
 import { FencedCodeBlock } from "../../program/MarkdownParser";
 import { ts } from "ts-morph";
@@ -35,7 +36,7 @@ type SpawnResult = ReadonlyRecord<
 >;
 
 // -------------------------------------------------------------------------------------
-// transformer
+// md -> valid TS
 // -------------------------------------------------------------------------------------
 
 const getAnnotatedSourceCode =
@@ -49,6 +50,7 @@ const getAnnotatedSourceCode =
             refs,
             RA.map((ref) => {
                 const imports: string[] = [];
+                const project = new Project();
 
                 const code = pipe(
                     ref.blocks,
@@ -57,26 +59,30 @@ const getAnnotatedSourceCode =
                         const header = `// start-eval-block ${opener}`;
                         const footer = `// end-eval-block`;
 
-                        const project = new Project();
                         const sourceFile = project.createSourceFile(
-                            "it.ts",
+                            "it" + index + ".ts",
                             block.content
                         );
 
+                        const importsToHoist: ImportDeclaration[] = [];
                         sourceFile.forEachChild((node) => {
                             if (Node.isImportDeclaration(node)) {
                                 if (!imports.includes(node.getFullText())) {
                                     imports.push(node.getFullText());
                                 }
-                                node.replaceWithText(
-                                    node
-                                        .getFullText()
-                                        .trim()
-                                        .split("\n")
-                                        .map((it) => "// eval-md-hoisted " + it)
-                                        .join("\n")
-                                );
+                                importsToHoist.push(node);
                             }
+                        });
+
+                        importsToHoist.forEach((node) => {
+                            node.replaceWithText(
+                                node
+                                    .getFullText()
+                                    .trim()
+                                    .split("\n")
+                                    .map((it) => "// eval-md-hoisted " + it)
+                                    .join("\n")
+                            );
                         });
 
                         if (consumeEndOfBlock) {
@@ -149,6 +155,9 @@ const getAnnotatedSourceCode =
             }),
             E.of
         );
+// -------------------------------------------------------------------------------------
+// transformer
+// -------------------------------------------------------------------------------------
 
 const changeExtension = (file: string, extension: string): string => {
     const basename = path.basename(file, path.extname(file));
@@ -291,7 +300,11 @@ const toPrint = (
     refs: ReadonlyArray<Executor.CompilerInputFile>
 ): Program<ReadonlyArray<FileBlocks>> =>
     pipe(
-        getAnnotatedSourceCode(refs, false),
+        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.chainFirst(({ logger }) =>
+            RTE.fromTaskEither(logger.debug("Processing code with ts-morph..."))
+        ),
+        RTE.chain(() => getAnnotatedSourceCode(refs, false)),
         RTE.chain((it) => (_deps) => async () => {
             const project = new Project({
                 tsConfigFilePath: "tsconfig.json",
@@ -370,6 +383,10 @@ const toPrint = (
                         .trim(),
                 }))
             )
+        ),
+        RTE.chainFirst(
+            (_it) => (deps) =>
+                deps.logger.debug("Finished formatting with ts-morph...")
         )
     );
 
@@ -381,7 +398,7 @@ const spawnTsNode = (): Program<SpawnResult> =>
     pipe(
         RTE.ask<Core.Environment, Core.TransportedError>(),
         RTE.chainFirst(({ logger }) =>
-            RTE.fromTaskEither(logger.debug("Type checking examples..."))
+            RTE.fromTaskEither(logger.debug("Spawning ts-node..."))
         ),
         RTE.chainTaskEitherK(({ settings, runner: Runner }) => {
             const command =
@@ -416,15 +433,53 @@ const spawnTsNode = (): Program<SpawnResult> =>
 // executor
 // -------------------------------------------------------------------------------------
 
+const getExec = (refs: ReadonlyArray<Executor.CompilerInputFile>) =>
+    pipe(
+        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.chainFirst(({ logger }) =>
+            RTE.fromTaskEither(logger.debug("Starting ts-node execution..."))
+        ),
+        RTE.chain(() => getExecutableFilesAndIndex(refs)),
+        RTE.chainW((it) => Core.writeFiles(it)),
+        RTE.chain(spawnTsNode),
+        RTE.chainFirst(
+            (_it) => (deps) =>
+                deps.logger.debug("Finished ts-node execution...")
+        )
+    );
+
+const mergeParallel =
+    (
+        refs: ReadonlyArray<Executor.CompilerInputFile>
+    ): Program<{
+        execResult: Readonly<
+            Record<string, readonly Executor.BlockExecutionResult[]>
+        >;
+        toPrint: ReadonlyArray<FileBlocks>;
+    }> =>
+    (deps) =>
+    async () => {
+        const [ex, prt] = await Promise.all([
+            getExec(refs)(deps)(),
+            toPrint(refs)(deps)(),
+        ]);
+        return pipe(
+            ex,
+            E.bindTo("execResult"),
+            E.bind("toPrint", () => prt)
+        );
+    };
+
 export const typescriptLanguageExecutor: Executor.LanguageExecutor = {
     language: "ts" as InfoString.InputLanguage,
     execute: (refs) =>
         pipe(
-            getExecutableFilesAndIndex(refs),
-            RTE.chainW((it) => Core.writeFiles(it)),
-            RTE.chain(spawnTsNode),
-            RTE.bindTo("execResult"),
-            RTE.bind("toPrint", () => toPrint(refs)),
+            mergeParallel(refs),
+            // getExecutableFilesAndIndex(refs),
+            // RTE.chainW((it) => Core.writeFiles(it)),
+            // RTE.chain(spawnTsNode),
+            // RTE.bindTo("execResult"),
+            // RTE.bind("toPrint", () => toPrint(refs)),
             RTE.map((acc) =>
                 pipe(
                     RA.zip(refs, acc.toPrint),

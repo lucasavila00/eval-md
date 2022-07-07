@@ -123,7 +123,11 @@ export const run = (
     files: ReadonlyArray<Core.AstAndFile>
 ): Core.Program<ReadonlyArray<Execution>> =>
     pipe(
-        assertAllPrintBlocksHaveCompilers(files),
+        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.chainFirst(({ logger }) =>
+            RTE.fromTaskEither(logger.debug("Executing code..."))
+        ),
+        RTE.chain(() => assertAllPrintBlocksHaveCompilers(files)),
         RTE.chain(() => RTE.ask()),
         RTE.chain((env) =>
             pipe(
