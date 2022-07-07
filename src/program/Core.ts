@@ -271,7 +271,15 @@ const getMarkdownFiles = (
                     }
                     return item;
                 }),
-                (t) => Transformer.transform(t, fileRef.ast, execResults),
+                (t) =>
+                    Transformer.transform(
+                        t,
+                        fileRef.ast,
+                        pipe(
+                            execResults,
+                            RA.filter((e) => e.file.path === fileRef.file.path)
+                        )
+                    ),
                 RTE.chainReaderK(
                     (content) => (env) =>
                         File(

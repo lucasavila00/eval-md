@@ -1,4 +1,8 @@
--   [ ] adding custom printer, like custom lang
+-   [ ] inlay specific tests
+
+-   [ ] ts error handler
+
+-   [ ] ts console capture
 
 -   [ ] eslint
 

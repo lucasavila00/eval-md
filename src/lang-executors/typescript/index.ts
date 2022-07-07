@@ -11,7 +11,14 @@ import { File } from "../../program/FileSystem";
 import { codeTemplate, indexTemplate } from "./templates";
 import * as MD from "../../program/MarkdownParser";
 import * as path from "path";
-import { Project, Node, SyntaxKind, SourceFile } from "ts-morph";
+import {
+    Project,
+    Node,
+    SyntaxKind,
+    SourceFile,
+    CallExpression,
+    NewExpression,
+} from "ts-morph";
 import { FencedCodeBlock } from "../../program/MarkdownParser";
 import { ts } from "ts-morph";
 
@@ -189,25 +196,73 @@ const getExecutableFilesAndIndex = (
 // source-printer
 // -------------------------------------------------------------------------------------
 
+const addInlayParametersToNode = (
+    node: CallExpression<ts.CallExpression>,
+    names: string[] | null
+): void => {
+    node.getArguments().forEach((arg, index) => {
+        const inlay = names?.[index] ?? "";
+        if (inlay != "") {
+            arg.replaceWithText("/* " + inlay + ": */ " + arg.getText());
+        }
+    });
+};
+const addInlayParametersToNodeNewExpression = (
+    node: NewExpression,
+    names: string[] | null
+): void => {
+    node.getArguments().forEach((arg, index) => {
+        const inlay = names?.[index] ?? "";
+        if (inlay != "") {
+            arg.replaceWithText("/* " + inlay + ": */ " + arg.getText());
+        }
+    });
+};
+
 const addInlayParameters = (sourceFile: SourceFile) => {
     sourceFile.forEachDescendant((node) => {
+        if (Node.isNewExpression(node)) {
+            const identifierKind = node.getExpressionIfKind(
+                SyntaxKind.Identifier
+            );
+
+            if (identifierKind != null) {
+                const names = identifierKind
+                    .getType()
+                    .getConstructSignatures()[0]
+                    ?.getParameters()
+                    .map((p) => p.getFullyQualifiedName());
+
+                addInlayParametersToNodeNewExpression(node, names);
+            }
+        }
         if (Node.isCallExpression(node)) {
-            const e = node.getExpressionIfKind(SyntaxKind.Identifier);
+            const identifierKind = node.getExpressionIfKind(
+                SyntaxKind.Identifier
+            );
+            if (identifierKind != null) {
+                const names = identifierKind
+                    .getType()
+                    .getCallSignatures()[0]
+                    ?.getParameters()
+                    .map((p) => p.getFullyQualifiedName());
 
-            const names = e
-                ?.getType()
-                .getCallSignatures()[0]
-                ?.getParameters()
-                .map((p) => p.getFullyQualifiedName());
+                addInlayParametersToNode(node, names);
+            }
 
-            node.getArguments().forEach((arg, index) => {
-                const inlay = names?.[index] ?? "";
-                if (inlay != "") {
-                    arg.replaceWithText(
-                        "/* " + inlay + ": */ " + arg.getText()
-                    );
-                }
-            });
+            const propertyAccessKind = node.getExpressionIfKind(
+                SyntaxKind.PropertyAccessExpression
+            );
+
+            if (propertyAccessKind != null) {
+                const names = propertyAccessKind
+                    .getType()
+                    .getCallSignatures()[0]
+                    ?.getParameters()
+                    .map((p) => p.getFullyQualifiedName());
+
+                addInlayParametersToNode(node, names);
+            }
         }
     });
 };
