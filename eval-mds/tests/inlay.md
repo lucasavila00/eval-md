@@ -23,14 +23,14 @@ text(
 
 ## Unary calls
 
-It adds inlay hints to identifiers
+It adds inlay hints to identifiers.
 
 ```ts eval --hideout
 const nothing = (_it: string) => void 0;
 nothing("abc");
 ```
 
-It adds inlay hints to property access expressions
+It adds inlay hints to property access expressions.
 
 ```ts eval --hideout
 const nothing2 = { fn: (_it: string) => void 0 };
@@ -45,13 +45,13 @@ class AClass {
 }
 ```
 
-It adds inlay hints to class constructors
+It adds inlay hints to class constructors.
 
 ```ts eval
 const aClassInstance = new AClass("abc");
 ```
 
-It adds inlay hints to class methods
+It adds inlay hints to class methods.
 
 ```ts eval --hideout
 aClassInstance.aMethod("def");
@@ -59,14 +59,14 @@ aClassInstance.aMethod("def");
 
 ## N-ary calls
 
-It adds inlay hints to n-ary calls to identifiers
+It adds inlay hints to n-ary calls to identifiers.
 
 ```ts eval --hideout
 const naryFn = (_it: string, _it2: number, _it3: boolean) => void 0;
 naryFn("abc", 123, false);
 ```
 
-It adds inlay hints to n-ary calls to property access expressions
+It adds inlay hints to n-ary calls to property access expressions.
 
 ```ts eval --hideout
 const naryFnObj = { fn: (_it: string, _it2: number, _it3: boolean) => void 0 };
@@ -81,13 +81,15 @@ class AClass3 {
 }
 ```
 
-It adds inlay hints to n-ary class constructors
+It adds inlay hints to n-ary class constructors.
 
-```ts eval
+Notice that the snippet is re-formatted by prettier.
+
+```ts eval --meta
 const aClassInstance3 = new AClass3("abc", 123, false);
 ```
 
-It adds inlay hints to n-ary class methods
+It adds inlay hints to n-ary class methods.
 
 ```ts eval --hideout
 aClassInstance3.aMethod3("def", 123, false);

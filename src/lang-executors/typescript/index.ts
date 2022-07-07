@@ -21,6 +21,7 @@ import {
 } from "ts-morph";
 import { FencedCodeBlock } from "../../program/MarkdownParser";
 import { ts } from "ts-morph";
+import * as prettier from "prettier";
 
 // -------------------------------------------------------------------------------------
 // model
@@ -340,6 +341,18 @@ const toPrint = (
                     )
                 );
             })
+        ),
+        RTE.map(
+            RA.map(
+                RA.map((block) => ({
+                    ...block,
+                    content: prettier
+                        .format(block.content, {
+                            filepath: "it.ts",
+                        })
+                        .trim(),
+                }))
+            )
         )
     );
 

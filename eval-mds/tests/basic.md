@@ -91,16 +91,16 @@ By default, values print as json.
 
 ```ts eval
 ({
-    a: 1;
-})
+    a: 1,
+});
 ```
 
 The output language can be overidden
 
 ```ts eval --out=jsonjs --meta
 ({
-    a: 1;
-})
+    a: 1,
+});
 ```
 
 The fenced code block can be hidden

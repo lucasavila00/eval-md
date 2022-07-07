@@ -119,8 +119,8 @@ By default, values print as json.
 
 ```ts
 ({
-    a: 1;
-})
+  a: 1,
+});
 ```
 
 ```json
@@ -132,15 +132,15 @@ The output language can be overidden
 ````md
 ```ts eval --out=jsonjs --meta
 ({
-    a: 1;
-})
+    a: 1,
+});
 ```
 ````
 
 ```ts
 ({
-    a: 1;
-})
+  a: 1,
+});
 ```
 
 ```js
