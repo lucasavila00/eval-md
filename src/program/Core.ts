@@ -12,6 +12,7 @@ import { Logger } from "./Logger";
 import { Settings } from "./Config";
 import { defaultLanguageCompilers } from "../lang-executors";
 import { Runner } from "./Runner";
+import { defaultPrinters } from "../printers";
 
 const CONFIG_FILE_NAME = "eval-md.json";
 
@@ -132,7 +133,7 @@ const getDefaultSettings = (): Settings => ({
     srcDir: "eval-mds",
     outDir: "docs",
     exclude: [],
-    outputPrinters: [],
+    outputPrinters: defaultPrinters,
 });
 
 const hasConfiguration: Effect<boolean> = pipe(
@@ -255,7 +256,7 @@ const getMarkdownFiles = (
                     }
                     return item;
                 }),
-                (t) => Transformer.transform(t, execResults),
+                (t) => Transformer.transform(t, fileRef.ast, execResults),
                 RTE.chainReaderK(
                     (content) => (env) =>
                         File(

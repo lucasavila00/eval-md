@@ -5,13 +5,15 @@ import * as RA from "fp-ts/lib/ReadonlyArray";
 import * as InfoString from "./InfoStringParser";
 import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as Core from "./Core";
+import * as O from "fp-ts/lib/Option";
 
 // -------------------------------------------------------------------------------------
 // models
 // -------------------------------------------------------------------------------------
 
 export type BlockTransformer = (
-    block: MD.FencedCodeBlock,
+    execBlock: MD.FencedCodeBlock,
+    rawBlock: MD.FencedCodeBlock,
     infoString: InfoString.EvalInfoString,
     results: readonly Executor.BlockExecutionResult[]
 ) => Core.Program<MD.AST>;
@@ -25,22 +27,22 @@ export type OutputTransformer = {
     readonly language: InfoString.OutputLanguage;
     readonly print: (
         result: Executor.BlockExecutionResult
-    ) => Core.Program<BlockTransformationResult>;
+    ) => Core.Program<O.Option<BlockTransformationResult>>;
 };
 
 // -------------------------------------------------------------------------------------
 // transformers
 // -------------------------------------------------------------------------------------
 
-const metaBlock: BlockTransformer = (block, infoString) => {
+const metaBlock: BlockTransformer = (_execBlock, rawBlock, infoString) => {
     if (infoString.flags.includes("meta")) {
         return RTE.of([
             MD.FencedCodeBlock(
-                MD.print([block]),
+                MD.print([rawBlock]),
                 MD.FenceOpener(
-                    block.opener.ticks + block.opener.ticks[0],
+                    rawBlock.opener.ticks + rawBlock.opener.ticks[0],
                     "md",
-                    block.opener.precedingSpaces
+                    rawBlock.opener.precedingSpaces
                 )
             ),
         ]);
@@ -48,22 +50,26 @@ const metaBlock: BlockTransformer = (block, infoString) => {
     return RTE.of([]);
 };
 
-const mainBlock: BlockTransformer = (block, infoString) =>
-    RTE.of([
-        MD.FencedCodeBlock(
-            block.content,
-            MD.FenceOpener(
-                block.opener.ticks,
-                infoString.language,
-                block.opener.precedingSpaces
-            )
-        ),
-    ]);
+const mainBlock: BlockTransformer = (execBlock, _rawBlock, infoString) =>
+    RTE.of(
+        infoString.flags.includes("hide")
+            ? []
+            : [
+                  MD.FencedCodeBlock(
+                      execBlock.content,
+                      MD.FenceOpener(
+                          execBlock.opener.ticks,
+                          infoString.language,
+                          execBlock.opener.precedingSpaces
+                      )
+                  ),
+              ]
+    );
 
 const transformPrintedValue = (
     result: Executor.BlockExecutionResult,
     printLanguage: InfoString.OutputLanguage
-): Core.Program<BlockTransformationResult> =>
+): Core.Program<O.Option<BlockTransformationResult>> =>
     pipe(
         RTE.ask<Core.Environment, Core.TransportedError>(),
         RTE.chain((env) => {
@@ -77,10 +83,25 @@ const transformPrintedValue = (
         })
     );
 
-const printBlock: BlockTransformer = (block, infoString, results) => {
+const printBlock: BlockTransformer = (
+    execBlock,
+    _rawBlock,
+    infoString,
+    results
+) => {
+    if (infoString.flags.includes("hideout")) {
+        return RTE.of([]);
+    }
     const printLang = infoString.named[
-        "print"
+        "out"
     ] as InfoString.OutputLanguage | null;
+    const getPrintedBlocks = (
+        it: ReadonlyArray<O.Option<BlockTransformationResult>>
+    ): ReadonlyArray<BlockTransformationResult> =>
+        it.reduce(
+            (p, c) => (O.isSome(c) ? [...p, c.value] : p),
+            [] as ReadonlyArray<BlockTransformationResult>
+        );
 
     return pipe(
         results,
@@ -90,14 +111,15 @@ const printBlock: BlockTransformer = (block, infoString, results) => {
                 printLang ?? InfoString.DefaultOutputLanguage
             )
         ),
+        RTE.map(getPrintedBlocks),
         RTE.map(
             RA.map((it) =>
                 MD.FencedCodeBlock(
                     it.content,
                     MD.FenceOpener(
-                        block.opener.ticks,
+                        execBlock.opener.ticks,
                         it.infoString,
-                        block.opener.precedingSpaces
+                        execBlock.opener.precedingSpaces
                     )
                 )
             )
@@ -105,12 +127,17 @@ const printBlock: BlockTransformer = (block, infoString, results) => {
     );
 };
 
-const transformEvalBlock: BlockTransformer = (block, infoString, results) =>
+const transformEvalBlock: BlockTransformer = (
+    execBlock,
+    rawBlock,
+    infoString,
+    results
+) =>
     pipe(
         [
-            metaBlock(block, infoString, results),
-            mainBlock(block, infoString, results),
-            printBlock(block, infoString, results),
+            metaBlock(execBlock, rawBlock, infoString, results),
+            mainBlock(execBlock, rawBlock, infoString, results),
+            printBlock(execBlock, rawBlock, infoString, results),
         ],
         RTE.sequenceArray,
         RTE.map(RA.flatten),
@@ -122,15 +149,17 @@ const transformEvalBlock: BlockTransformer = (block, infoString, results) =>
 // -------------------------------------------------------------------------------------
 
 export const transform = (
-    ast: MD.AST,
+    execAst: MD.AST,
+    rawAst: MD.AST,
     execResult: ReadonlyArray<Executor.Execution>
 ): Core.Program<MD.AST> => {
     let index = 0;
     return pipe(
-        ast,
-        RA.map((block) => {
+        RA.zip(execAst, rawAst),
+        RA.map(([block, rawBlock]) => {
             if (
                 block._tag === "FencedCodeBlock" &&
+                rawBlock._tag === "FencedCodeBlock" &&
                 InfoString.isEval(block.opener.infoString)
             ) {
                 const blockResults = pipe(
@@ -147,6 +176,7 @@ export const transform = (
                     RTE.chain((infoString) =>
                         transformEvalBlock(
                             block,
+                            rawBlock,
                             infoString.value,
                             blockResults
                         )

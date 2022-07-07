@@ -22,9 +22,9 @@ layout: default
 
 # Error capture
 
-Notice: An error throw in a block that is not `--print=error` will make `eval-md` throw.
+Notice: An error throw in a block that is not `--out=error` will make `eval-md` throw.
 
-Not throwing in a block that is `--print=error` will also make `eval-md` throw.
+Not throwing in a block that is `--out=error` will also make `eval-md` throw.
 
 ```ts
 throw new Error("...");
@@ -65,7 +65,7 @@ TODO
 ```
 
 ```json
-[{"a":1}]
+[{ "a": 1 }]
 ```
 
 ```ts

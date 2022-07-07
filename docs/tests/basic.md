@@ -48,27 +48,123 @@ throw new Error("...");
 
 Eval blocks can be meta.
 
-```ts --meta
+````md
+```ts eval --meta
+// some code
+```
+````
+
+```ts
 // some code
 ```
 
+<!-- Eval blocks can be empty. -->
+
+
 It evaluates a block of code from a recognized language that calls eval.
 
-```ts --meta
-const add1 = (it: number) => it + 1;
+````md
+```ts eval --meta
+const nothing = (_arg: number) => void 0;
+```
+````
+
+```ts
+const nothing = (_arg: number) => void 0;
 ```
 
-It handles printing values from the evaluated code, that will be printed in the generated markdown.
+It prints inlay hints
 
-```ts --print=json --meta
-add1(3);
+````md
+```ts eval --meta
+const nothing2 = () => nothing(123);
+```
+````
+
+```ts
+const nothing2 = () => nothing(/* _arg: */ 123);
 ```
 
 ```ts
-console.error(123);
-import * as fs from "fs";
-console.error(fs);
+const add1 = (it: number) => it + 1;
+```
 
-const add = (it: number): number => it + 1;
-add(/* it: */ 123);
+It captures values from the evaluated code, that will be printed in the generated markdown.
+
+````md
+```ts eval --meta
+add1(3);
+```
+````
+
+```ts
+add1(/* it: */ 3);
+```
+
+```json
+4
+```
+
+```ts
+nothing2();
+```
+
+```json
+undefined
+```
+
+By default, values print as json.
+
+```ts
+({
+    a: 1;
+})
+```
+
+```json
+{"a":1}
+```
+
+The output language can be overidden
+
+````md
+```ts eval --out=jsonjs --meta
+({
+    a: 1;
+})
+```
+````
+
+```ts
+({
+    a: 1;
+})
+```
+
+```js
+{ a: 1 }
+```
+
+The fenced code block can be hidden
+
+````md
+```ts eval --meta --hide
+({ hide: "me", n: 123 + 456 });
+```
+````
+
+```json
+{"hide":"me","n":579}
+```
+
+The output can be hidden
+
+````md
+```ts eval --meta --hideout
+({ hide: "me", n: 123 + 456 });
+```
+````
+
+```ts
+({ hide: "me", n: 123 + 456 });
 ```

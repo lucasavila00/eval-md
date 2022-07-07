@@ -31,7 +31,7 @@ it("works", () => {
           "named": Object {},
         }
     `);
-    expect(run("ts eval --print=sql").value).toMatchInlineSnapshot(`
+    expect(run("ts eval --out=sql").value).toMatchInlineSnapshot(`
         Object {
           "_tag": "EvalInfoString",
           "flags": Array [],
@@ -41,7 +41,7 @@ it("works", () => {
           },
         }
     `);
-    expect(run("ts eval --print").value).toMatchInlineSnapshot(`
+    expect(run("ts eval --out").value).toMatchInlineSnapshot(`
         Object {
           "_tag": "EvalInfoString",
           "flags": Array [

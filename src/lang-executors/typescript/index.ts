@@ -70,7 +70,7 @@ const getAnnotatedSourceCode = (
                         const sts = sourceFile.getStatements();
                         const last = sts[sts.length - 1];
 
-                        last.transform((traversal) => {
+                        last?.transform((traversal) => {
                             if (
                                 ts.isExpressionStatement(traversal.currentNode)
                             ) {

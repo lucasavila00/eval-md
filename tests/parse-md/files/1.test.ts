@@ -31,7 +31,7 @@ it("works", async () => {
             "content": "print add1(3);",
             "opener": Object {
               "_tag": "FenceOpener",
-              "infoString": "ts eval --print=json",
+              "infoString": "ts eval --out=json",
               "precedingSpaces": Object {
                 "_tag": "None",
               },
