@@ -2,7 +2,7 @@
 
 -   [ ] eslint
 
-    -   [ ] enable no console
+    -   [ ] enable CI
 
 -   [ ] validate eval args, prevent extra args
 

@@ -37,7 +37,7 @@ it("works", () => {
           "flags": Array [],
           "language": "ts",
           "named": Object {
-            "print": "sql",
+            "out": "sql",
           },
         }
     `);
@@ -45,7 +45,7 @@ it("works", () => {
         Object {
           "_tag": "EvalInfoString",
           "flags": Array [
-            "print",
+            "out",
           ],
           "language": "ts",
           "named": Object {},

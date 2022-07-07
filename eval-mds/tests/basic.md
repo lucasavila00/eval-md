@@ -9,6 +9,8 @@ layout: default
 __meta.tocTemplate;
 ```
 
+# Basic tests
+
 ```ts eval --out=md --hide
 import { Anchor, text } from "../../src/md-writer";
 
@@ -18,8 +20,6 @@ text(
     "to see the uncompiled source."
 );
 ```
-
-# Basic tests
 
 ## Not calling eval
 
@@ -49,7 +49,7 @@ throw new Error("...");
 
 ## Calling eval
 
-Eval blocks can be meta.
+Eval blocks can be meta. These tests make extensive use of this feature.
 
 ```ts eval --meta
 // some code

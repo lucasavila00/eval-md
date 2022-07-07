@@ -16,9 +16,9 @@ layout: default
 </details>
 
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/eval-mds/tests/basic.md) to see the uncompiled source.
-
 # Basic tests
+
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/basic.md) to see the uncompiled source.
 
 ## Not calling eval
 
@@ -48,7 +48,7 @@ throw new Error("...");
 
 ## Calling eval
 
-Eval blocks can be meta.
+Eval blocks can be meta. These tests make extensive use of this feature.
 
 ````md
 ```ts eval --meta

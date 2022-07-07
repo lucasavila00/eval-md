@@ -145,7 +145,7 @@ const getDefaultSettings = (): Settings => ({
     exclude: [],
     outputPrinters: defaultPrinters,
     runtimeMeta: {
-        srcUrl: "https://github.com/lucasavila00/eval-md/",
+        srcUrl: "https://github.com/lucasavila00/eval-md/tree/main/",
         docsUrl: "https://lucasavila00.github.io/eval-md/",
         tocTemplate,
     },
