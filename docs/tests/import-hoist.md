@@ -28,6 +28,16 @@ readFile;
 [Function: readFile]
 ```
 
+Even in environemnts without top level await, it works.
+
+```ts
+const delay = () =>
+  new Promise(
+    /* executor: */ (rs) => setTimeout(/* callback: */ rs, /* ms: */ 1)
+  );
+await delay();
+```
+
 We can import stuff one at a time.
 
 ```ts

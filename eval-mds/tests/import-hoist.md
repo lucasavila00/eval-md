@@ -10,6 +10,13 @@ import { readFile } from "fs";
 readFile;
 ```
 
+Even in environemnts without top level await, it works.
+
+```ts eval --hideout
+const delay = () => new Promise((rs) => setTimeout(rs, 1));
+await delay();
+```
+
 We can import stuff one at a time.
 
 ```ts eval --out=jsonjs

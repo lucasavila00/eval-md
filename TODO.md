@@ -1,13 +1,5 @@
 -   [ ] inlay + spread
 
--   [ ] import hoisting tests
-
-    -   [ ] it is spamming comments in the runnable code
-
--   [ ] import de-duplication tests
-
--   [ ] ts error handler
-
 -   [ ] ts console capture
 
 -   [ ] eslint
