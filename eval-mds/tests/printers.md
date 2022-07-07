@@ -1,22 +1,6 @@
----
-title: Printers
-nav_order: 10
-parent: Tests
-layout: default
----
-
 ```ts eval --out=md --hide
-__meta.tocTemplate;
-```
-
-```ts eval --out=md --hide
-import { Anchor, text } from "../../src/md-writer";
-
-text(
-    "Check out the",
-    Anchor("original file", __meta.srcUrl + __meta.inputPath),
-    "to see the uncompiled source."
-);
+import { testHeader } from "../ts-utils/test-headers";
+testHeader("Printers", __meta.srcUrl + __meta.inputPath, 10);
 ```
 
 ```ts eval

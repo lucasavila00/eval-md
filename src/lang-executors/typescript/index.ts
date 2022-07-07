@@ -5,6 +5,7 @@ import * as Core from "../../program/Core";
 import * as InfoString from "../../program/InfoStringParser";
 import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as E from "fp-ts/lib/Either";
+import * as S from "fp-ts/lib/string";
 import * as RA from "fp-ts/lib/ReadonlyArray";
 import { ReadonlyRecord } from "fp-ts/lib/ReadonlyRecord";
 import { File } from "../../program/FileSystem";
@@ -19,6 +20,7 @@ import {
     CallExpression,
     NewExpression,
     ImportDeclaration,
+    Statement,
 } from "ts-morph";
 import { FencedCodeBlock } from "../../program/MarkdownParser";
 import { ts } from "ts-morph";
@@ -38,11 +40,76 @@ type SpawnResult = ReadonlyRecord<
 // -------------------------------------------------------------------------------------
 // md -> valid TS
 // -------------------------------------------------------------------------------------
+const consumeLastStatement = (
+    last: Statement<ts.Statement>,
+    outLanguage: string,
+    index: number
+) => {
+    last?.transform((traversal) => {
+        if (ts.isExpressionStatement(traversal.currentNode)) {
+            return traversal.factory.createExpressionStatement(
+                traversal.factory.createCallExpression(
+                    traversal.factory.createIdentifier("__consume"),
+                    undefined,
+                    [
+                        traversal.factory.createStringLiteral(outLanguage),
+                        traversal.factory.createNumericLiteral(index),
+                        traversal.currentNode.expression,
+                    ]
+                )
+            );
+        }
+        return traversal.currentNode;
+    });
+};
+
+const getOutputLanguage = (infoString: string) => {
+    const infoStringEither = InfoString.parse(infoString);
+    const outLanguage = pipe(
+        infoStringEither,
+        E.fold(
+            () => "json",
+            (it) => it.value.named["out"] ?? "json"
+        )
+    );
+    return outLanguage;
+};
+const hoistImports = (
+    sourceFile: SourceFile,
+    willExecute: boolean
+): string[] => {
+    const importsToHoist: ImportDeclaration[] = [];
+    const texts: string[] = [];
+    sourceFile.forEachChild((node) => {
+        if (Node.isImportDeclaration(node)) {
+            importsToHoist.push(node);
+            texts.push(node.getFullText());
+        }
+    });
+
+    if (willExecute) {
+        importsToHoist.forEach((node) => {
+            node.remove();
+        });
+    } else {
+        importsToHoist.forEach((node) => {
+            node.replaceWithText(
+                node
+                    .getFullText()
+                    .trim()
+                    .split("\n")
+                    .map((it) => "// eval-md-hoisted " + it)
+                    .join("\n") + "\n"
+            );
+        });
+    }
+    return texts;
+};
 
 const getAnnotatedSourceCode =
     (
         refs: ReadonlyArray<Executor.CompilerInputFile>,
-        consumeEndOfBlock: boolean
+        willExecute: boolean
     ): Program<ReadonlyArray<File>> =>
     (env) =>
     async () =>
@@ -54,89 +121,41 @@ const getAnnotatedSourceCode =
 
                 const code = pipe(
                     ref.blocks,
-                    RA.mapWithIndex((index, block) => {
-                        const opener = JSON.stringify(block.opener);
-                        const header = `// start-eval-block ${opener}`;
-                        const footer = `// end-eval-block`;
+                    RA.chainWithIndex((index, block) => {
+                        const outLanguage = getOutputLanguage(
+                            block.opener.infoString
+                        );
 
                         const sourceFile = project.createSourceFile(
                             "it" + index + ".ts",
                             block.content
                         );
 
-                        const importsToHoist: ImportDeclaration[] = [];
-                        sourceFile.forEachChild((node) => {
-                            if (Node.isImportDeclaration(node)) {
-                                if (!imports.includes(node.getFullText())) {
-                                    imports.push(node.getFullText());
-                                }
-                                importsToHoist.push(node);
+                        const hoisted = hoistImports(sourceFile, willExecute);
+                        imports.push(...hoisted);
+
+                        if (willExecute) {
+                            if (outLanguage === "error") {
+                                const try_ = "try {";
+                                const catch_ = `}catch(e){__consume("error",${index},e)}`;
+                                return [try_, sourceFile.getFullText(), catch_];
+                            } else {
+                                const sts = sourceFile.getStatements();
+                                const last = sts[sts.length - 1];
+                                consumeLastStatement(last, outLanguage, index);
+                                return [sourceFile.getFullText()];
                             }
-                        });
+                        } else {
+                            const opener = JSON.stringify(block.opener);
+                            const header = `// start-eval-block ${opener}`;
+                            const footer = `// end-eval-block`;
 
-                        importsToHoist.forEach((node) => {
-                            node.replaceWithText(
-                                node
-                                    .getFullText()
-                                    .trim()
-                                    .split("\n")
-                                    .map((it) => "// eval-md-hoisted " + it)
-                                    .join("\n")
-                            );
-                        });
-
-                        if (consumeEndOfBlock) {
-                            const sts = sourceFile.getStatements();
-                            const last = sts[sts.length - 1];
-
-                            last?.transform((traversal) => {
-                                if (
-                                    ts.isExpressionStatement(
-                                        traversal.currentNode
-                                    )
-                                ) {
-                                    return traversal.factory.createExpressionStatement(
-                                        traversal.factory.createCallExpression(
-                                            traversal.factory.createIdentifier(
-                                                "__consume"
-                                            ),
-                                            undefined,
-                                            [
-                                                traversal.factory.createStringLiteral(
-                                                    pipe(
-                                                        InfoString.parse(
-                                                            block.opener
-                                                                .infoString
-                                                        ),
-                                                        E.fold(
-                                                            () => "json",
-                                                            (it) =>
-                                                                it.value.named[
-                                                                    "out"
-                                                                ] ?? "json"
-                                                        )
-                                                    )
-                                                ),
-                                                traversal.factory.createNumericLiteral(
-                                                    index
-                                                ),
-                                                traversal.currentNode
-                                                    .expression,
-                                            ]
-                                        )
-                                    );
-                                }
-                                return traversal.currentNode;
-                            });
+                            return [header, sourceFile.getFullText(), footer];
                         }
-
-                        return [header, sourceFile.getFullText(), footer].join(
-                            "\n"
-                        );
                     })
                 );
                 const content = [
-                    imports,
+                    ...pipe(imports, RA.uniq(S.Eq)),
                     codeTemplate(
                         "const __meta = " +
                             JSON.stringify({
@@ -353,7 +372,6 @@ const toPrint = (
                         acc[acc.length - 1].push(line);
                     }
                 }
-
                 return pipe(
                     acc,
                     RA.map(

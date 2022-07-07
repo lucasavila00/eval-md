@@ -1,22 +1,6 @@
----
-title: Basic
-nav_order: 1
-parent: Tests
-layout: default
----
-
 ```ts eval --out=md --hide
-__meta.tocTemplate;
-```
-
-```ts eval --out=md --hide
-import { Anchor, text } from "../../src/md-writer";
-
-text(
-    "Check out the",
-    Anchor("original file", __meta.srcUrl + __meta.inputPath),
-    "to see the uncompiled source."
-);
+import { testHeader } from "../ts-utils/test-headers";
+testHeader("Basic", __meta.srcUrl + __meta.inputPath, 1);
 ```
 
 # Not calling eval

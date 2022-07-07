@@ -5,7 +5,6 @@ parent: Tests
 layout: default
 ---
 
-
 <details open markdown="block">
   <summary>
     Table of contents
@@ -14,7 +13,6 @@ layout: default
 1. TOC
 {:toc}
 </details>
-
 
 Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/inlay.md) to see the uncompiled source.
 
