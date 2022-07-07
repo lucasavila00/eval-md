@@ -10,6 +10,7 @@ const __arr: {
     content: any;
     blockIndex: number;
 }[] = [];
+let __dnt = false;
 const __consume = (
     outLanguage: string,
     blockIndex: number,
@@ -17,6 +18,8 @@ const __consume = (
 ) => {
     if (outLanguage === "jsonjs") {
         __arr.push({ content: util.inspect(content), blockIndex });
+    } else if (outLanguage === "error") {
+        __arr.push({ content: String(content), blockIndex });
     } else {
         __arr.push({ content: JSON.stringify(content), blockIndex });
     }
@@ -27,6 +30,7 @@ if (Math.log(1) > 0) {
     String(__consume);
     String(__meta);
     String(util);
+    String(__dnt);
 }
 return __arr;
 }

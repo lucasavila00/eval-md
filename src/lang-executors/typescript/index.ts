@@ -137,7 +137,7 @@ const getAnnotatedSourceCode =
                         if (willExecute) {
                             if (outLanguage === "error") {
                                 const try_ = "try {";
-                                const catch_ = `}catch(e){__consume("error",${index},e)}`;
+                                const catch_ = `;__dnt=true;}catch(e){__consume("error",${index},e)};if(__dnt){throw new Error('did not throw')}`;
                                 return [try_, sourceFile.getFullText(), catch_];
                             } else {
                                 const sts = sourceFile.getStatements();
