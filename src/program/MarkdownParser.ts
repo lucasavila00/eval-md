@@ -27,7 +27,7 @@ export type FencedCodeBlock = {
     opener: FenceOpener;
 };
 
-export type AstNodes = OtherMarkdown | FencedCodeBlock;
+export type AstNode = OtherMarkdown | FencedCodeBlock;
 export type AST = ReadonlyArray<OtherMarkdown | FencedCodeBlock>;
 
 // -------------------------------------------------------------------------------------

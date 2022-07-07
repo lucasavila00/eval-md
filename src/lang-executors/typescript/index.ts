@@ -30,80 +30,100 @@ type SpawnResult = ReadonlyRecord<
 // transformer
 // -------------------------------------------------------------------------------------
 
-const getAnnotatedSourceCode = (
-    refs: ReadonlyArray<Executor.CompilerInputFile>,
-    consumeEndOfBlock: boolean
-): Program<ReadonlyArray<File>> => {
-    return pipe(
-        refs,
-        RA.map((ref) => {
-            const imports: string[] = [];
+const getAnnotatedSourceCode =
+    (
+        refs: ReadonlyArray<Executor.CompilerInputFile>,
+        consumeEndOfBlock: boolean
+    ): Program<ReadonlyArray<File>> =>
+    (env) =>
+    async () =>
+        pipe(
+            refs,
+            RA.map((ref) => {
+                const imports: string[] = [];
 
-            const code = pipe(
-                ref.blocks,
-                RA.mapWithIndex((index, block) => {
-                    const opener = JSON.stringify(block.opener);
-                    const header = `// start-eval-block ${opener}`;
-                    const footer = `// end-eval-block`;
+                const code = pipe(
+                    ref.blocks,
+                    RA.mapWithIndex((index, block) => {
+                        const opener = JSON.stringify(block.opener);
+                        const header = `// start-eval-block ${opener}`;
+                        const footer = `// end-eval-block`;
 
-                    const project = new Project();
-                    const sourceFile = project.createSourceFile(
-                        "it.ts",
-                        block.content
-                    );
+                        const project = new Project();
+                        const sourceFile = project.createSourceFile(
+                            "it.ts",
+                            block.content
+                        );
 
-                    sourceFile.forEachChild((node) => {
-                        if (Node.isImportDeclaration(node)) {
-                            imports.push(node.getFullText());
-                            node.replaceWithText(
-                                node
-                                    .getFullText()
-                                    .trim()
-                                    .split("\n")
-                                    .map((it) => "// eval-md-hoisted " + it)
-                                    .join("\n")
-                            );
-                        }
-                    });
-
-                    if (consumeEndOfBlock) {
-                        const sts = sourceFile.getStatements();
-                        const last = sts[sts.length - 1];
-
-                        last?.transform((traversal) => {
-                            if (
-                                ts.isExpressionStatement(traversal.currentNode)
-                            ) {
-                                return traversal.factory.createExpressionStatement(
-                                    traversal.factory.createCallExpression(
-                                        traversal.factory.createIdentifier(
-                                            "__consume"
-                                        ),
-                                        undefined,
-                                        [
-                                            traversal.factory.createNumericLiteral(
-                                                index
-                                            ),
-                                            traversal.currentNode.expression,
-                                        ]
-                                    )
+                        sourceFile.forEachChild((node) => {
+                            if (Node.isImportDeclaration(node)) {
+                                imports.push(node.getFullText());
+                                node.replaceWithText(
+                                    node
+                                        .getFullText()
+                                        .trim()
+                                        .split("\n")
+                                        .map((it) => "// eval-md-hoisted " + it)
+                                        .join("\n")
                                 );
                             }
-                            return traversal.currentNode;
                         });
-                    }
 
-                    return [header, sourceFile.getFullText(), footer].join(
-                        "\n"
-                    );
-                })
-            );
-            const content = [imports, codeTemplate(code.join("\n"))].join("\n");
-            return File(ref.file.path, content, false);
-        }),
-        RTE.of
-    );
-};
+                        if (consumeEndOfBlock) {
+                            const sts = sourceFile.getStatements();
+                            const last = sts[sts.length - 1];
+
+                            last?.transform((traversal) => {
+                                if (
+                                    ts.isExpressionStatement(
+                                        traversal.currentNode
+                                    )
+                                ) {
+                                    return traversal.factory.createExpressionStatement(
+                                        traversal.factory.createCallExpression(
+                                            traversal.factory.createIdentifier(
+                                                "__consume"
+                                            ),
+                                            undefined,
+                                            [
+                                                traversal.factory.createNumericLiteral(
+                                                    index
+                                                ),
+                                                traversal.currentNode
+                                                    .expression,
+                                            ]
+                                        )
+                                    );
+                                }
+                                return traversal.currentNode;
+                            });
+                        }
+
+                        return [header, sourceFile.getFullText(), footer].join(
+                            "\n"
+                        );
+                    })
+                );
+                const content = [
+                    imports,
+                    codeTemplate(
+                        "const __meta = " +
+                            JSON.stringify({
+                                ...env.settings.runtimeMeta,
+                                inputPath: ref.file.path,
+                                outputPath: ref.file.path.replace(
+                                    env.settings.srcDir,
+                                    env.settings.outDir
+                                ),
+                            }) +
+                            ";\n" +
+                            code.join("\n")
+                    ),
+                ].join("\n");
+                return File(ref.file.path, content, false);
+            }),
+            E.of
+        );
 
 const changeExtension = (file: string, extension: string): string => {
     const basename = path.basename(file, path.extname(file));
@@ -205,12 +225,15 @@ const toPrint = (
             });
 
             for (const f of it) {
-                project.createSourceFile(getExecFileName(f, "ts"), f.content);
+                project.createSourceFile(
+                    getExecFileName(f, "check.ts"),
+                    f.content
+                );
             }
 
             const newFiles = it.map((f) => {
                 const sourceFile = project.getSourceFile(
-                    getExecFileName(f, "ts")
+                    getExecFileName(f, "check.ts")
                 );
 
                 if (sourceFile == null) {

@@ -11,4 +11,5 @@ export type Settings = {
     readonly exclude: ReadonlyArray<string>;
     readonly languageCompilers: ReadonlyArray<Executor.LanguageExecutor>;
     readonly outputPrinters: ReadonlyArray<Transformer.OutputTransformer>;
+    readonly runtimeMeta: Record<string, string>;
 };

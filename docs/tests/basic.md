@@ -5,6 +5,7 @@ parent: Tests
 layout: default
 ---
 
+
 <details open markdown="block">
   <summary>
     Table of contents
@@ -14,7 +15,8 @@ layout: default
 {:toc}
 </details>
 
-TODO link to original file
+
+Check out the [original file](https://github.com/lucasavila00/eval-md/eval-mds/tests/basic.md) to see the uncompiled source.
 
 # Basic tests
 

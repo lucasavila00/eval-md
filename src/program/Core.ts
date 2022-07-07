@@ -127,13 +127,28 @@ const readSourceFiles: Program<ReadonlyArray<File>> = pipe(
 // config
 // -------------------------------------------------------------------------------------
 
-console.error("fix printers");
+const tocTemplate = `
+<details open markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
+1. TOC
+{:toc}
+</details>
+`;
+console.error("fix");
 const getDefaultSettings = (): Settings => ({
     languageCompilers: defaultLanguageCompilers,
     srcDir: "eval-mds",
     outDir: "docs",
     exclude: [],
     outputPrinters: defaultPrinters,
+    runtimeMeta: {
+        srcUrl: "https://github.com/lucasavila00/eval-md/",
+        docsUrl: "https://lucasavila00.github.io/eval-md/",
+        tocTemplate,
+    },
 });
 
 const hasConfiguration: Effect<boolean> = pipe(

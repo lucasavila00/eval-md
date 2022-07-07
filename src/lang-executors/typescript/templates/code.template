@@ -10,6 +10,11 @@ const __arr: {
 }[] = [];
 const __consume = (blockIndex: number, content: any) =>
     __arr.push({ content, blockIndex });
-{{##1##}}
+{{##0##}}
+// prevent "is declared but its value is never read."
+if (Math.log(1)>0) {
+    String(__consume)
+    String(__meta)
+}
 return __arr;
 }

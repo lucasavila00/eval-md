@@ -114,14 +114,16 @@ const printBlock: BlockTransformer = (
         RTE.map(getPrintedBlocks),
         RTE.map(
             RA.map((it) =>
-                MD.FencedCodeBlock(
-                    it.content,
-                    MD.FenceOpener(
-                        execBlock.opener.ticks,
-                        it.infoString,
-                        execBlock.opener.precedingSpaces
-                    )
-                )
+                it.infoString === "#md#"
+                    ? MD.OtherMarkdown("\n" + it.content)
+                    : MD.FencedCodeBlock(
+                          it.content,
+                          MD.FenceOpener(
+                              execBlock.opener.ticks,
+                              it.infoString,
+                              execBlock.opener.precedingSpaces
+                          )
+                      )
             )
         )
     );
@@ -141,7 +143,7 @@ const transformEvalBlock: BlockTransformer = (
         ],
         RTE.sequenceArray,
         RTE.map(RA.flatten),
-        RTE.map(RA.intersperse<MD.AstNodes>(MD.OtherMarkdown("\n")))
+        RTE.map(RA.intersperse<MD.AstNode>(MD.OtherMarkdown("\n")))
     );
 
 // -------------------------------------------------------------------------------------

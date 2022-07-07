@@ -5,16 +5,19 @@ parent: Tests
 layout: default
 ---
 
-<details open markdown="block">
-  <summary>
-    Table of contents
-  </summary>
-  {: .text-delta }
-1. TOC
-{:toc}
-</details>
+```ts eval --out=md --hide
+__meta.tocTemplate;
+```
 
-TODO link to original file
+```ts eval --out=md --hide
+import { Anchor, text } from "../../src/md-writer";
+
+text(
+    "Check out the",
+    Anchor("original file", __meta.srcUrl + __meta.inputPath),
+    "to see the uncompiled source."
+);
+```
 
 # Basic tests
 
