@@ -1,3 +1,5 @@
+-   [ ] add footer by default, like just the docs
+
 -   [ ] inlay + spread
 
 -   [ ] ts console capture
@@ -14,4 +16,4 @@
 
 -   [ ] tests
 
-    -   [ ] enable coverage
+    -   [ ] enable coverage (can we get cov from ts-node?)

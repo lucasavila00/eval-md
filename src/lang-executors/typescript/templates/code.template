@@ -1,36 +1,97 @@
 import * as util from "util";
 
-export default async function main(): Promise<
-    {
-        content: any;
-        blockIndex: number;
-    }[]
-> {
-const __arr: {
-    content: any;
-    blockIndex: number;
-}[] = [];
-let __dnt = false;
-const __consume = (
-    outLanguage: string,
-    blockIndex: number,
-    content: any
-) => {
-    if (outLanguage === "jsonjs") {
-        __arr.push({ content: util.inspect(content), blockIndex });
-    } else if (outLanguage === "error") {
-        __arr.push({ content: String(content), blockIndex });
-    } else {
-        __arr.push({ content: JSON.stringify(content), blockIndex });
-    }
+type BlockExecutionResult = {
+    readonly _tag: "BlockExecutionResult";
+    readonly blockIndex: number;
+    readonly content: string;
 };
+type ConsoleExecutionResult = {
+    readonly _tag: "ConsoleExecutionResult";
+    readonly blockIndex: number;
+    readonly content: string;
+    readonly level: "log" | "error" | "warn" | "info"|'debug';
+};
+
+type Ret = BlockExecutionResult | ConsoleExecutionResult;
+
+export default async function main(): Promise<Ret[]> {
+    const __arr: Ret[] = [];
+    let __dnt = false;
+    const __consume = (
+        outLanguage: string,
+        blockIndex: number,
+        content: any
+    ) => {
+        if (outLanguage === "jsonjs") {
+            __arr.push({
+                content: util.inspect(content),
+                blockIndex,
+                _tag: "BlockExecutionResult",
+            });
+        } else if (outLanguage === "error") {
+            __arr.push({
+                content: String(content),
+                blockIndex,
+                _tag: "BlockExecutionResult",
+            });
+        } else {
+            __arr.push({
+                content: JSON.stringify(content),
+                blockIndex,
+                _tag: "BlockExecutionResult",
+            });
+        }
+    };
+    const __console = (blockIndex: number) => ({
+        log: (...content: any[]) => {
+            __arr.push({
+                content: JSON.stringify(util.format(...content)),
+                blockIndex,
+                _tag: "ConsoleExecutionResult",
+                level: "log",
+            });
+        },
+        error: (...content: any[]) => {
+            __arr.push({
+                content: JSON.stringify(util.format(...content)),
+                blockIndex,
+                _tag: "ConsoleExecutionResult",
+                level: "error",
+            });
+        },
+        warn: (...content: any[]) => {
+            __arr.push({
+                content: JSON.stringify(util.format(...content)),
+                blockIndex,
+                _tag: "ConsoleExecutionResult",
+                level: "warn",
+            });
+        },
+        info: (...content: any[]) => {
+            __arr.push({
+                content: JSON.stringify(util.format(...content)),
+                blockIndex,
+                _tag: "ConsoleExecutionResult",
+                level: "info",
+            });
+        },
+        debug: (...content: any[]) => {
+            __arr.push({
+                content: JSON.stringify(util.format(...content)),
+                blockIndex,
+                _tag: "ConsoleExecutionResult",
+                level: "debug",
+            });
+        },
+    });
 {{##0##}}
-// prevent "is declared but its value is never read."
-if (Math.log(1) > 0) {
-    String(__consume);
-    String(__meta);
-    String(util);
-    String(__dnt);
-}
-return __arr;
+    // prevent "is declared but its value is never read."
+    if (Math.log(1) > 0) {
+        String(__consume);
+        String(__meta);
+        String(util);
+        String(__dnt);
+        String(__console);
+    }
+    return __arr;
 }

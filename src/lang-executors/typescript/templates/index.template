@@ -1,16 +1,13 @@
 {{##0##}}
 
-type FileResult = {
-    content: any;
-    blockIndex: number;
-}[];
+
 type GenDef = {
-    generator: () => Promise<FileResult>;
+    generator: () => Promise<any>;
     source: string;
 };
 
 const main = async () => {
-    const response: Record<string, FileResult> = {};
+    const response: Record<string, any> = {};
     const results = await Promise.all(generators.map(it => it.generator()))
     generators.forEach((it, idx) => {
         response[it.source] = results[idx]

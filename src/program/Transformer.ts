@@ -6,6 +6,7 @@ import * as InfoString from "./InfoStringParser";
 import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as Core from "./Core";
 import * as O from "fp-ts/lib/Option";
+import * as Ord from "fp-ts/lib/Ord";
 
 // -------------------------------------------------------------------------------------
 // models
@@ -15,7 +16,7 @@ export type BlockTransformer = (
     execBlock: MD.FencedCodeBlock,
     rawBlock: MD.FencedCodeBlock,
     infoString: InfoString.EvalInfoString,
-    results: readonly Executor.BlockExecutionResult[]
+    results: readonly Executor.LanguageExecutionResult[]
 ) => Core.Program<MD.AST>;
 
 export type BlockTransformationResult = {
@@ -26,8 +27,33 @@ export type BlockTransformationResult = {
 export type OutputTransformer = {
     readonly language: InfoString.OutputLanguage;
     readonly print: (
-        result: Executor.BlockExecutionResult
+        result: Executor.LanguageExecutionResult
     ) => Core.Program<O.Option<BlockTransformationResult>>;
+};
+
+const LanguageExecutionResultOrd: Ord.Ord<Executor.LanguageExecutionResult> = {
+    equals: (a, b) =>
+        a.blockIndex === b.blockIndex &&
+        a._tag === b._tag &&
+        a.content === b.content,
+    compare: (first, second) => {
+        if (first._tag === second._tag) {
+            return 0;
+        }
+        if (
+            first._tag === "BlockExecutionResult" &&
+            second._tag === "ConsoleExecutionResult"
+        ) {
+            return 1;
+        }
+        if (
+            first._tag === "ConsoleExecutionResult" &&
+            second._tag === "BlockExecutionResult"
+        ) {
+            return -1;
+        }
+        return 0;
+    },
 };
 
 // -------------------------------------------------------------------------------------
@@ -83,6 +109,15 @@ const transformPrintedValue = (
         })
     );
 
+const transformConsoleValue = (
+    result: Executor.ConsoleExecutionResult
+): Core.Program<O.Option<BlockTransformationResult>> =>
+    RTE.of(
+        O.some({
+            infoString: "#md#",
+            content: "> " + result.level + " : " + JSON.parse(result.content),
+        })
+    );
 const printBlock: BlockTransformer = (
     execBlock,
     _rawBlock,
@@ -105,11 +140,14 @@ const printBlock: BlockTransformer = (
 
     return pipe(
         results,
+        RA.sort(LanguageExecutionResultOrd),
         RTE.traverseArray((it) =>
-            transformPrintedValue(
-                it,
-                printLang ?? InfoString.DefaultOutputLanguage
-            )
+            it._tag == "BlockExecutionResult"
+                ? transformPrintedValue(
+                      it,
+                      printLang ?? InfoString.DefaultOutputLanguage
+                  )
+                : transformConsoleValue(it)
         ),
         RTE.map(getPrintedBlocks),
         RTE.map(

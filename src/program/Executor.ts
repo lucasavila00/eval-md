@@ -13,12 +13,23 @@ import * as E from "fp-ts/lib/Either";
 // -------------------------------------------------------------------------------------
 
 export type BlockExecutionResult = {
+    readonly _tag: "BlockExecutionResult";
     readonly blockIndex: number;
     readonly content: string;
 };
+export type ConsoleExecutionResult = {
+    readonly _tag: "ConsoleExecutionResult";
+    readonly blockIndex: number;
+    readonly content: string;
+    readonly level: "log" | "error" | "warn" | "info" | "debug";
+};
+
+export type LanguageExecutionResult =
+    | BlockExecutionResult
+    | ConsoleExecutionResult;
 export type ExecutedLanguageResult = {
     readonly inputFile: File;
-    readonly results: ReadonlyArray<BlockExecutionResult>;
+    readonly results: ReadonlyArray<LanguageExecutionResult>;
     readonly transformedBlocks: ReadonlyArray<MD.FencedCodeBlock>;
 };
 
@@ -35,7 +46,7 @@ export type LanguageExecutor = {
 };
 
 export type Execution = Core.AstAndFile & {
-    readonly results: ReadonlyArray<BlockExecutionResult>;
+    readonly results: ReadonlyArray<LanguageExecutionResult>;
     readonly transformedBlocks: ReadonlyArray<MD.FencedCodeBlock>;
 };
 

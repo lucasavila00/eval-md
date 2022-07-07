@@ -34,7 +34,7 @@ type SpawnResult = ReadonlyRecord<
     // file path
     string,
     // results
-    ReadonlyArray<Executor.BlockExecutionResult>
+    ReadonlyArray<Executor.LanguageExecutionResult>
 >;
 
 // -------------------------------------------------------------------------------------
@@ -135,6 +135,29 @@ const getAnnotatedSourceCode =
                         imports.push(...hoisted);
 
                         if (willExecute) {
+                            sourceFile.forEachDescendant((node) => {
+                                if (Node.isCallExpression(node)) {
+                                    const propertyAccessKind =
+                                        node.getExpressionIfKind(
+                                            SyntaxKind.PropertyAccessExpression
+                                        );
+
+                                    if (propertyAccessKind != null) {
+                                        const id1 =
+                                            propertyAccessKind.getChildren()[0];
+
+                                        if (
+                                            Node.isIdentifier(id1) &&
+                                            id1.getText() === "console"
+                                        ) {
+                                            id1.replaceWithText(
+                                                `__console(${index})`
+                                            );
+                                        }
+                                    }
+                                }
+                            });
+
                             if (outLanguage === "error") {
                                 const try_ = "try {";
                                 const catch_ = `;__dnt=true;}catch(e){__consume("error",${index},e)};if(__dnt){throw new Error('did not throw')}`;
@@ -471,7 +494,7 @@ const mergeParallel =
         refs: ReadonlyArray<Executor.CompilerInputFile>
     ): Program<{
         execResult: Readonly<
-            Record<string, readonly Executor.BlockExecutionResult[]>
+            Record<string, readonly Executor.LanguageExecutionResult[]>
         >;
         toPrint: ReadonlyArray<FileBlocks>;
     }> =>
