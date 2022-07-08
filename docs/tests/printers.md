@@ -17,10 +17,13 @@ layout: default
 Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/printers.md) to see the uncompiled source.
 
 ```ts
-const obj = { a: 1 };
+const obj = {
+  a: 1,
+};
 const str = "abc";
 const num = 1234;
 const bool = true;
+
 const fn = () => 123;
 ```
 
@@ -239,7 +242,6 @@ text(
 
 ```ts
 import { Anchor, text } from "../../src/md-writer";
-
 text(
   /* strs: */ "Check out the",
   Anchor(

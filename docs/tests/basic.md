@@ -94,6 +94,7 @@ add1(3);
 
 ```ts
 const add1 = (it: number) => it + 1;
+
 add1(/* it: */ 3);
 ```
 
@@ -162,5 +163,8 @@ The output can be hidden
 ````
 
 ```ts
-({ hide: "me", n: 123 + 456 });
+({
+  hide: "me",
+  n: 123 + 456,
+});
 ```

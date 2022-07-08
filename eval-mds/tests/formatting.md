@@ -9,9 +9,3 @@ TS code is formatted by prettier
 // prettier-ignore
 123 +                                456 + 789;
 ```
-
-<!-- prettier-ignore-start -->
-```ts eval --hideout --meta
-123 +                                456 + 789;
-```
-<!-- prettier-ignore-end -->

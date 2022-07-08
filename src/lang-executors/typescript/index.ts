@@ -19,13 +19,16 @@ import {
     SourceFile,
     CallExpression,
     NewExpression,
-    ImportDeclaration,
-    Statement,
 } from "ts-morph";
 import { FencedCodeBlock } from "../../program/MarkdownParser";
 import { ts } from "ts-morph";
 import * as prettier from "prettier";
+import * as parser from "@babel/parser";
+import traverse from "@babel/traverse";
+import generator from "@babel/generator";
+import { TraverseOptions } from "@babel/traverse";
 
+import * as t from "@babel/types";
 // -------------------------------------------------------------------------------------
 // model
 // -------------------------------------------------------------------------------------
@@ -40,28 +43,6 @@ type SpawnResult = ReadonlyRecord<
 // -------------------------------------------------------------------------------------
 // md -> valid TS
 // -------------------------------------------------------------------------------------
-const consumeLastStatement = (
-    last: Statement<ts.Statement>,
-    outLanguage: string,
-    index: number
-) => {
-    last?.transform((traversal) => {
-        if (ts.isExpressionStatement(traversal.currentNode)) {
-            return traversal.factory.createExpressionStatement(
-                traversal.factory.createCallExpression(
-                    traversal.factory.createIdentifier("__consume"),
-                    undefined,
-                    [
-                        traversal.factory.createStringLiteral(outLanguage),
-                        traversal.factory.createNumericLiteral(index),
-                        traversal.currentNode.expression,
-                    ]
-                )
-            );
-        }
-        return traversal.currentNode;
-    });
-};
 
 const getOutputLanguage = (infoString: string) => {
     const infoStringEither = InfoString.parse(infoString);
@@ -74,36 +55,77 @@ const getOutputLanguage = (infoString: string) => {
     );
     return outLanguage;
 };
-const hoistImports = (
-    sourceFile: SourceFile,
-    willExecute: boolean
-): string[] => {
-    const importsToHoist: ImportDeclaration[] = [];
-    const texts: string[] = [];
-    sourceFile.forEachChild((node) => {
-        if (Node.isImportDeclaration(node)) {
-            importsToHoist.push(node);
-            texts.push(node.getFullText());
-        }
-    });
 
-    if (willExecute) {
-        importsToHoist.forEach((node) => {
-            node.remove();
-        });
-    } else {
-        importsToHoist.forEach((node) => {
-            node.replaceWithText(
-                node
-                    .getFullText()
-                    .trim()
-                    .split("\n")
-                    .map((it) => "// eval-md-hoisted " + it)
-                    .join("\n") + "\n"
-            );
-        });
-    }
-    return texts;
+const consoleVisitor: TraverseOptions = {
+    CallExpression(path) {
+        if (
+            t.isMemberExpression(path.node.callee) &&
+            t.isIdentifier(path.node.callee.object) &&
+            path.node.callee.object.name === "console"
+        ) {
+            path.node.callee.object.name = "__console";
+        }
+    },
+};
+
+const consumeVisitor = (
+    outLanguage: string,
+    index: number
+): TraverseOptions => ({
+    Program: (path) => {
+        const body = path.node.body;
+        const last = body[body.length - 1];
+        if (last != null) {
+            if (t.isExpressionStatement(last)) {
+                const n = t.expressionStatement(
+                    t.callExpression(t.identifier("__consume"), [
+                        t.stringLiteral(outLanguage),
+                        t.numericLiteral(index),
+                        last.expression,
+                    ])
+                );
+                body[body.length - 1] = n;
+            }
+        }
+    },
+});
+
+const importsDeleteVisitor = (imports: string[]): TraverseOptions => ({
+    ImportDeclaration(path) {
+        imports.push(generator(path.node).code);
+        path.remove();
+    },
+});
+
+const importsToCommentVisitor = (imports: string[]): TraverseOptions => ({
+    ImportDeclaration(path) {
+        imports.push(generator(path.node).code);
+
+        const x =
+            generator(path.node)
+                .code.trim()
+                .split("\n")
+                .map((it) => "eval-md-hoisted\n" + it)
+                .join("\n") + "\n";
+
+        path.addComment("leading", x);
+        path.remove();
+    },
+});
+const transformTs = (
+    it: string,
+    visitors: TraverseOptions[],
+    shouldPrintComment: boolean
+): string => {
+    const ast = parser.parse(it, {
+        plugins: ["typescript"],
+        sourceType: "module",
+    });
+    visitors.forEach((visitor) => traverse(ast, visitor));
+    const newCode = generator(ast, {
+        shouldPrintComment: () => shouldPrintComment,
+    }).code;
+    return newCode;
 };
 
 const getAnnotatedSourceCode =
@@ -117,7 +139,6 @@ const getAnnotatedSourceCode =
             refs,
             RA.map((ref) => {
                 const imports: string[] = [];
-                const project = new Project();
 
                 const code = pipe(
                     ref.blocks,
@@ -126,62 +147,47 @@ const getAnnotatedSourceCode =
                             block.opener.infoString
                         );
 
-                        const sourceFile = project.createSourceFile(
-                            "it" + index + ".ts",
-                            block.content
-                        );
-
-                        const hoisted = hoistImports(sourceFile, willExecute);
-                        imports.push(...hoisted);
-
                         if (willExecute) {
-                            sourceFile.forEachDescendant((node) => {
-                                if (Node.isCallExpression(node)) {
-                                    const propertyAccessKind =
-                                        node.getExpressionIfKind(
-                                            SyntaxKind.PropertyAccessExpression
-                                        );
-
-                                    if (propertyAccessKind != null) {
-                                        const id1 =
-                                            propertyAccessKind.getChildren()[0];
-
-                                        if (
-                                            Node.isIdentifier(id1) &&
-                                            id1.getText() === "console"
-                                        ) {
-                                            id1.replaceWithText(`__console`);
-                                        }
-                                    }
-                                }
-                            });
-
                             const consoleBlockN = `__consoleBlock = ${index};`;
 
                             if (outLanguage === "error") {
+                                const out = transformTs(
+                                    block.content,
+                                    [
+                                        consoleVisitor,
+                                        importsDeleteVisitor(imports),
+                                    ],
+                                    false
+                                );
+
                                 const try_ = "try {";
                                 const catch_ = `;__dnt=true;}catch(e){__consume("error",${index},e)};if(__dnt){throw new Error('did not throw')}`;
-                                return [
-                                    consoleBlockN,
-                                    try_,
-                                    sourceFile.getFullText(),
-                                    catch_,
-                                ];
+                                return [consoleBlockN, try_, out, catch_];
                             } else {
-                                const sts = sourceFile.getStatements();
-                                const last = sts[sts.length - 1];
-                                consumeLastStatement(last, outLanguage, index);
-                                return [
-                                    consoleBlockN,
-                                    sourceFile.getFullText(),
-                                ];
+                                const out = transformTs(
+                                    block.content,
+                                    [
+                                        consoleVisitor,
+                                        importsDeleteVisitor(imports),
+                                        consumeVisitor(outLanguage, index),
+                                    ],
+                                    false
+                                );
+
+                                return [consoleBlockN, out];
                             }
                         } else {
+                            const out = transformTs(
+                                block.content,
+                                [importsToCommentVisitor(imports)],
+                                true
+                            );
+
                             const opener = JSON.stringify(block.opener);
                             const header = `// start-eval-block ${opener}`;
                             const footer = `// end-eval-block`;
 
-                            return [header, sourceFile.getFullText(), footer];
+                            return [header, out, footer];
                         }
                     })
                 );
@@ -390,6 +396,7 @@ const toPrint = (
                 const acc: string[][] = [];
 
                 let skipping = true;
+                let hoisted = 0;
                 for (const line of lines) {
                     if (line.startsWith("// end-eval-block")) {
                         skipping = true;
@@ -400,18 +407,24 @@ const toPrint = (
                         skipping = false;
                     }
                     if (!skipping) {
+                        if (line.startsWith("/*eval-md-hoisted")) {
+                            hoisted++;
+                            continue;
+                        }
+
+                        if (hoisted > 0) {
+                            if (line.startsWith("*/")) {
+                                hoisted--;
+                                continue;
+                            }
+                        }
+
                         acc[acc.length - 1].push(line);
                     }
                 }
                 return pipe(
                     acc,
-                    RA.map(
-                        RA.map((it) =>
-                            it.startsWith("// eval-md-hoisted ")
-                                ? it.replace("// eval-md-hoisted ", "")
-                                : it
-                        )
-                    ),
+
                     RA.map(([head, ...tail]) =>
                         FencedCodeBlock(
                             tail.join("\n"),

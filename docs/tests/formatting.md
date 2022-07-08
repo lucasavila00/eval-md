@@ -27,17 +27,5 @@ TS code is formatted by prettier
 
 ```ts
 // prettier-ignore
-123 +                                456 + 789;
-```
-
-<!-- prettier-ignore-start -->
-````md
-```ts eval --hideout --meta
-123 +                                456 + 789;
-```
-````
-
-```ts
 123 + 456 + 789;
 ```
-<!-- prettier-ignore-end -->

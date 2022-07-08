@@ -44,41 +44,41 @@ export default async function main(): Promise<Ret[]> {
     };
     let __consoleBlock = 0;
     const __console = {
-        log: (...content: any[]) => {
+        log: (...message: any[]) => {
             __arr.push({
-                content: JSON.stringify(util.format(...content)),
+                content: JSON.stringify(util.format(...message)),
                 blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "log",
             });
         },
-        error: (...content: any[]) => {
+        error: (...message: any[]) => {
             __arr.push({
-                content: JSON.stringify(util.format(...content)),
+                content: JSON.stringify(util.format(...message)),
                 blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "error",
             });
         },
-        warn: (...content: any[]) => {
+        warn: (...message: any[]) => {
             __arr.push({
-                content: JSON.stringify(util.format(...content)),
+                content: JSON.stringify(util.format(...message)),
                 blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "warn",
             });
         },
-        info: (...content: any[]) => {
+        info: (...message: any[]) => {
             __arr.push({
-                content: JSON.stringify(util.format(...content)),
+                content: JSON.stringify(util.format(...message)),
                 blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "info",
             });
         },
-        debug: (...content: any[]) => {
+        debug: (...message: any[]) => {
             __arr.push({
-                content: JSON.stringify(util.format(...content)),
+                content: JSON.stringify(util.format(...message)),
                 blockIndex: __consoleBlock,
                 _tag: "ConsoleExecutionResult",
                 level: "debug",
