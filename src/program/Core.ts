@@ -130,8 +130,8 @@ const readSourceFiles: Program<ReadonlyArray<File>> = pipe(
 console.error("fix");
 const getDefaultSettings = (): Settings => ({
     languageCompilers: defaultLanguageCompilers,
-    srcDir: "eval-mds",
-    outDir: "docs",
+    srcDir: process.env["EVAL_MD_SRC_DIR"] ?? "eval-mds",
+    outDir: process.env["EVAL_MD_OUT_DIR"] ?? "docs",
     exclude: [],
     outputPrinters: defaultPrinters,
     runtimeMeta: {

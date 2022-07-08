@@ -30,6 +30,11 @@ const fn = () => {
 
 ```ts
 fn();
+("out");
 ```
 
 > log : hi2
+
+```json
+"out"
+```

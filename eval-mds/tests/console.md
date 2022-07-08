@@ -13,6 +13,7 @@ const fn = () => {
 };
 ```
 
-```ts eval --hideout
+```ts eval
 fn();
+("out");
 ```

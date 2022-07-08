@@ -418,38 +418,13 @@ const getExec = (refs: ReadonlyArray<Executor.CompilerInputFile>) =>
         )
     );
 
-const mergeParallel =
-    (
-        refs: ReadonlyArray<Executor.CompilerInputFile>
-    ): Program<{
-        execResult: Readonly<
-            Record<string, readonly Executor.LanguageExecutionResult[]>
-        >;
-        toPrint: ReadonlyArray<FileBlocks>;
-    }> =>
-    (deps) =>
-    async () => {
-        const [ex, prt] = await Promise.all([
-            getExec(refs)(deps)(),
-            toPrint(refs)(deps)(),
-        ]);
-        return pipe(
-            ex,
-            E.bindTo("execResult"),
-            E.bind("toPrint", () => prt)
-        );
-    };
-
 export const typescriptLanguageExecutor: Executor.LanguageExecutor = {
     language: "ts" as InfoString.InputLanguage,
     execute: (refs) =>
         pipe(
-            mergeParallel(refs),
-            // getExecutableFilesAndIndex(refs),
-            // RTE.chainW((it) => Core.writeFiles(it)),
-            // RTE.chain(spawnTsNode),
-            // RTE.bindTo("execResult"),
-            // RTE.bind("toPrint", () => toPrint(refs)),
+            RTE.Do,
+            RTE.apS("execResult", getExec(refs)),
+            RTE.apS("toPrint", toPrint(refs)),
             RTE.map((acc) =>
                 pipe(
                     RA.zip(refs, acc.toPrint),

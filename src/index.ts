@@ -11,6 +11,7 @@ import { FileSystem } from "./program/FileSystem";
 import { Logger } from "./program/Logger";
 import { pipe } from "fp-ts/lib/function";
 import { Runner } from "./program/Runner";
+import chokidar from "chokidar";
 
 // -------------------------------------------------------------------------------------
 // utils
@@ -22,17 +23,37 @@ const exitProcess =
         process.exit(code);
 
 const onLeft = (e: string): T.Task<void> =>
-    T.fromIO(
-        pipe(
-            log(chalk.bold.red(e)),
-            IO.chain(() => exitProcess(1))
-        )
-    );
+    process.env["EVAL_MD_WILL_THROW"] == "yes"
+        ? pipe(
+              T.fromIO(
+                  log(chalk.bold.green("Docs generation failed, as expected!"))
+              ),
+              T.chain(() => T.fromIO(log(chalk.bold.red(e)))),
+              T.chain(() => T.fromIO(exitProcess(0)))
+          )
+        : T.fromIO(
+              pipe(
+                  log(chalk.bold.red(e)),
+                  IO.chain(() => exitProcess(1))
+              )
+          );
 
-const onRight: T.Task<void> = pipe(
-    T.fromIO(log(chalk.bold.green("Docs generation succeeded!"))),
-    T.chain(() => T.fromIO(exitProcess(0)))
-);
+const onRight: T.Task<void> =
+    process.env["EVAL_MD_WILL_THROW"] == "yes"
+        ? pipe(
+              T.fromIO(
+                  log(
+                      chalk.bold.green(
+                          "Docs generation did not fail, it was expected!"
+                      )
+                  )
+              ),
+              T.chain(() => T.fromIO(exitProcess(1)))
+          )
+        : pipe(
+              T.fromIO(log(chalk.bold.green("Docs generation succeeded!"))),
+              T.chain(() => T.fromIO(exitProcess(0)))
+          );
 
 /**
  * @category utils
@@ -51,4 +72,16 @@ const capabilities: Core.Capabilities = {
  * @category utils
  * @since 0.6.0
  */
-export const main: T.Task<void> = pipe(Core.main(capabilities), exit);
+//  export const main: T.Task<void> = ;
+
+export const main: T.Task<void> = async () => {
+    if (process.env["EVAL_MD_WATCH"] != "yes") {
+        return pipe(Core.main(capabilities), exit)();
+    }
+    // const te = Core.main(capabilities);
+
+    // One-liner for current directory
+    chokidar.watch(".").on("all", (event, path) => {
+        console.log(event, path);
+    });
+};
