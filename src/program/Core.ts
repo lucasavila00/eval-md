@@ -128,7 +128,7 @@ const readSourceFiles: Program<ReadonlyArray<File>> = pipe(
 // -------------------------------------------------------------------------------------
 
 console.error("fix");
-const getDefaultSettings = (): Settings => ({
+export const getDefaultSettings = (): Settings => ({
     languageCompilers: defaultLanguageCompilers,
     srcDir: process.env["EVAL_MD_SRC_DIR"] ?? "eval-mds",
     outDir: process.env["EVAL_MD_OUT_DIR"] ?? "docs",
@@ -332,6 +332,30 @@ export const main: Effect<void> = pipe(
                     RTE.bind("md", (acc) => getMarkdownFiles(acc.exec)),
                     RTE.bind("write", (acc) => writeMarkdownFiles(acc.md)),
                     RTE.map((_it) => void 0)
+                );
+                return program({ ...capabilities, settings });
+            })
+        )
+    )
+);
+
+/**
+ * @category program
+ * @since 0.6.0
+ */
+export const getFiles: Effect<ReadonlyArray<File>> = pipe(
+    RTE.ask<Capabilities>(),
+    RTE.chain((capabilities) =>
+        pipe(
+            getConfiguration(),
+            RTE.chainTaskEitherK((settings) => {
+                const program = pipe(
+                    readSourceFiles,
+                    RTE.bindTo("read"),
+                    RTE.bind("parse", (acc) => parseFiles(acc.read)),
+                    RTE.bind("exec", (acc) => Executor.run(acc.parse)),
+                    RTE.bind("md", (acc) => getMarkdownFiles(acc.exec)),
+                    RTE.map((it) => it.md)
                 );
                 return program({ ...capabilities, settings });
             })
