@@ -29,10 +29,7 @@ import { readFile } from "fs";
 Even in environemnts without top level await, it works.
 
 ```ts
-const delay = () =>
-  new Promise(
-    /* executor: */ (rs) => setTimeout(/* callback: */ rs, /* ms: */ 1)
-  );
+const delay = () => new Promise((rs) => setTimeout(rs, 1));
 await delay();
 ```
 

@@ -22,14 +22,14 @@ It adds inlay hints to identifiers.
 
 ```ts
 const nothing = (_it: string) => void 0;
-nothing(/* _it: */ "abc");
+nothing("abc");
 ```
 
 It adds inlay hints to property access expressions.
 
 ```ts
 const nothing2 = { fn: (_it: string) => void 0 };
-nothing2.fn(/* _it: */ "abc");
+nothing2.fn("abc");
 ```
 
 ```ts
@@ -42,13 +42,13 @@ class AClass {
 It adds inlay hints to class constructors.
 
 ```ts
-const aClassInstance = new AClass(/* _props: */ "abc");
+const aClassInstance = new AClass("abc");
 ```
 
 It adds inlay hints to class methods.
 
 ```ts
-aClassInstance.aMethod(/* _it: */ "def");
+aClassInstance.aMethod("def");
 ```
 
 # N-ary calls
@@ -57,14 +57,14 @@ It adds inlay hints to n-ary calls to identifiers.
 
 ```ts
 const naryFn = (_it: string, _it2: number, _it3: boolean) => void 0;
-naryFn(/* _it: */ "abc", /* _it2: */ 123, /* _it3: */ false);
+naryFn("abc", 123, false);
 ```
 
 It adds inlay hints to n-ary calls to property access expressions.
 
 ```ts
 const naryFnObj = { fn: (_it: string, _it2: number, _it3: boolean) => void 0 };
-naryFnObj.fn(/* _it: */ "abc", /* _it2: */ 123, /* _it3: */ false);
+naryFnObj.fn("abc", 123, false);
 ```
 
 ```ts
@@ -85,15 +85,11 @@ const aClassInstance3 = new AClass3("abc", 123, false);
 ````
 
 ```ts
-const aClassInstance3 = new AClass3(
-  /* _props: */ "abc",
-  /* _props2: */ 123,
-  /* _props3: */ false
-);
+const aClassInstance3 = new AClass3("abc", 123, false);
 ```
 
 It adds inlay hints to n-ary class methods.
 
 ```ts
-aClassInstance3.aMethod3(/* _it: */ "def", /* _it2: */ 123, /* _it3: */ false);
+aClassInstance3.aMethod3("def", 123, false);
 ```

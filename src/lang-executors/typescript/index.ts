@@ -277,6 +277,8 @@ const toPrint = (
         ),
         RTE.chain(() => getAnnotatedSourceCode(refs, false)),
         RTE.chain((it) => (deps) => async () => {
+            console.error("make configurable");
+            return E.of(it);
             deps.logger.debug("Spawning ts-morph worker")();
             const p = new Promise((resolve, reject) => {
                 const worker = new Worker(path.join(__dirname, "worker.js"), {
@@ -378,7 +380,7 @@ const spawnTsNode = (): Program<SpawnResult> =>
                 settings.srcDir,
                 "index.exec.ts"
             );
-            return Runner.run(command, executablePath);
+            return Runner.run(command, ["--transpileOnly", executablePath]);
         }),
         RTE.map((value) => {
             let capturing = false;

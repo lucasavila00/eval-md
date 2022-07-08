@@ -74,13 +74,15 @@ const nothing = (_arg: number) => void 0;
 It prints inlay hints
 
 ````md
-```ts eval --meta
+```ts eval --meta --hideout
 const nothing2 = () => nothing(123);
+nothing2();
 ```
 ````
 
 ```ts
-const nothing2 = () => nothing(/* _arg: */ 123);
+const nothing2 = () => nothing(123);
+nothing2();
 ```
 
 It captures values from the evaluated code, that will be printed in the generated markdown.
@@ -94,19 +96,11 @@ add1(3);
 
 ```ts
 const add1 = (it: number) => it + 1;
-add1(/* it: */ 3);
+add1(3);
 ```
 
 ```json
 4
-```
-
-```ts
-nothing2();
-```
-
-```json
-undefined
 ```
 
 By default, values print as json.

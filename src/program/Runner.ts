@@ -10,7 +10,7 @@ import { TransportedError } from "./Core";
 export type Runner = {
     readonly run: (
         command: string,
-        executablePath: string
+        args: string[]
     ) => TE.TaskEither<TransportedError, string>;
 };
 
@@ -20,13 +20,13 @@ export type Runner = {
 
 export const run = (
     command: string,
-    executablePath: string
+    args: string[]
 ): TE.TaskEither<string, string> =>
     pipe(
         TE.fromEither(
             E.tryCatch(
                 () =>
-                    spawnSync(command, [executablePath], {
+                    spawnSync(command, args, {
                         stdio: "pipe",
                         encoding: "utf8",
                     }),

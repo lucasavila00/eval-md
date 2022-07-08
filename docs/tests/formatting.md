@@ -18,14 +18,14 @@ Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/
 
 TS code is formatted by prettier
 
+<!-- prettier-ignore-start -->
 ````md
 ```ts eval --hideout --meta
-// prettier-ignore
 123 +                                456 + 789;
 ```
 ````
 
 ```ts
-// prettier-ignore
 123 + 456 + 789;
 ```
+<!-- prettier-ignore-end -->

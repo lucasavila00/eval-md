@@ -355,7 +355,8 @@ export const getFiles: Effect<ReadonlyArray<File>> = pipe(
                     RTE.bind("parse", (acc) => parseFiles(acc.read)),
                     RTE.bind("exec", (acc) => Executor.run(acc.parse)),
                     RTE.bind("md", (acc) => getMarkdownFiles(acc.exec)),
-                    RTE.map((it) => it.md)
+                    RTE.map((it) => it.md),
+                    RTE.mapLeft((it) => String(it))
                 );
                 return program({ ...capabilities, settings });
             })
