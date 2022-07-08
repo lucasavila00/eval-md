@@ -94,7 +94,6 @@ add1(3);
 
 ```ts
 const add1 = (it: number) => it + 1;
-
 add1(/* it: */ 3);
 ```
 
@@ -113,9 +112,7 @@ undefined
 By default, values print as json.
 
 ```ts
-({
-  a: 1,
-});
+({ a: 1 });
 ```
 
 ```json
@@ -133,9 +130,7 @@ The output language can be overidden
 ````
 
 ```ts
-({
-  a: 1,
-});
+({ a: 1 });
 ```
 
 ```js
@@ -163,8 +158,5 @@ The output can be hidden
 ````
 
 ```ts
-({
-  hide: "me",
-  n: 123 + 456,
-});
+({ hide: "me", n: 123 + 456 });
 ```

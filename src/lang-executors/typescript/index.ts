@@ -12,23 +12,15 @@ import { File } from "../../program/FileSystem";
 import { codeTemplate, indexTemplate } from "./templates";
 import * as MD from "../../program/MarkdownParser";
 import * as path from "path";
-import {
-    Project,
-    Node,
-    SyntaxKind,
-    SourceFile,
-    CallExpression,
-    NewExpression,
-} from "ts-morph";
 import { FencedCodeBlock } from "../../program/MarkdownParser";
-import { ts } from "ts-morph";
 import * as prettier from "prettier";
 import * as parser from "@babel/parser";
 import traverse from "@babel/traverse";
 import generator from "@babel/generator";
 import { TraverseOptions } from "@babel/traverse";
-
+import { Worker } from "node:worker_threads";
 import * as t from "@babel/types";
+import { getExecFileName } from "./shared";
 // -------------------------------------------------------------------------------------
 // model
 // -------------------------------------------------------------------------------------
@@ -115,7 +107,7 @@ const importsToCommentVisitor = (imports: string[]): TraverseOptions => ({
 const transformTs = (
     it: string,
     visitors: TraverseOptions[],
-    shouldPrintComment: boolean
+    comments: boolean
 ): string => {
     const ast = parser.parse(it, {
         plugins: ["typescript"],
@@ -123,7 +115,9 @@ const transformTs = (
     });
     visitors.forEach((visitor) => traverse(ast, visitor));
     const newCode = generator(ast, {
-        shouldPrintComment: () => shouldPrintComment,
+        comments,
+        concise: true,
+        // retainLines: true,
     }).code;
     return newCode;
 };
@@ -215,14 +209,6 @@ const getAnnotatedSourceCode =
 // transformer
 // -------------------------------------------------------------------------------------
 
-const changeExtension = (file: string, extension: string): string => {
-    const basename = path.basename(file, path.extname(file));
-    return path.join(path.dirname(file), basename + extension);
-};
-
-const getExecFileName = (file: File, language: string): string =>
-    changeExtension(file.path, "." + language);
-
 const getExecutableSourceCode = (
     refs: ReadonlyArray<Executor.CompilerInputFile>
 ): Program<ReadonlyArray<File>> =>
@@ -279,77 +265,6 @@ const getExecutableFilesAndIndex = (
 // source-printer
 // -------------------------------------------------------------------------------------
 
-const addInlayParametersToNode = (
-    node: CallExpression<ts.CallExpression>,
-    names: string[] | null
-): void => {
-    node.getArguments().forEach((arg, index) => {
-        const inlay = names?.[index] ?? "";
-        if (inlay != "") {
-            arg.replaceWithText("/* " + inlay + ": */ " + arg.getText());
-        }
-    });
-};
-const addInlayParametersToNodeNewExpression = (
-    node: NewExpression,
-    names: string[] | null
-): void => {
-    node.getArguments().forEach((arg, index) => {
-        const inlay = names?.[index] ?? "";
-        if (inlay != "") {
-            arg.replaceWithText("/* " + inlay + ": */ " + arg.getText());
-        }
-    });
-};
-
-const addInlayParameters = (sourceFile: SourceFile) => {
-    sourceFile.forEachDescendant((node) => {
-        if (Node.isNewExpression(node)) {
-            const identifierKind = node.getExpressionIfKind(
-                SyntaxKind.Identifier
-            );
-
-            if (identifierKind != null) {
-                const names = identifierKind
-                    .getType()
-                    .getConstructSignatures()[0]
-                    ?.getParameters()
-                    .map((p) => p.getFullyQualifiedName());
-
-                addInlayParametersToNodeNewExpression(node, names);
-            }
-        }
-        if (Node.isCallExpression(node)) {
-            const identifierKind = node.getExpressionIfKind(
-                SyntaxKind.Identifier
-            );
-            if (identifierKind != null) {
-                const names = identifierKind
-                    .getType()
-                    .getCallSignatures()[0]
-                    ?.getParameters()
-                    .map((p) => p.getFullyQualifiedName());
-
-                addInlayParametersToNode(node, names);
-            }
-
-            const propertyAccessKind = node.getExpressionIfKind(
-                SyntaxKind.PropertyAccessExpression
-            );
-
-            if (propertyAccessKind != null) {
-                const names = propertyAccessKind
-                    .getType()
-                    .getCallSignatures()[0]
-                    ?.getParameters()
-                    .map((p) => p.getFullyQualifiedName());
-
-                addInlayParametersToNode(node, names);
-            }
-        }
-    });
-};
-
 type FileBlocks = ReadonlyArray<MD.FencedCodeBlock>;
 
 const toPrint = (
@@ -361,33 +276,26 @@ const toPrint = (
             RTE.fromTaskEither(logger.debug("Processing code with ts-morph..."))
         ),
         RTE.chain(() => getAnnotatedSourceCode(refs, false)),
-        RTE.chain((it) => (_deps) => async () => {
-            const project = new Project({
-                tsConfigFilePath: "tsconfig.json",
+        RTE.chain((it) => (deps) => async () => {
+            deps.logger.debug("Spawning ts-morph worker")();
+            const p = new Promise((resolve, reject) => {
+                const worker = new Worker(path.join(__dirname, "worker.js"), {
+                    workerData: JSON.stringify(it),
+                });
+                worker.on("message", resolve);
+                worker.on("error", reject);
+                worker.on("exit", (code) => {
+                    if (code !== 0)
+                        reject(
+                            new Error(`Worker stopped with exit code ${code}`)
+                        );
+                });
             });
+            const r = await p;
+            deps.logger.debug("Ts-morph worker finished")();
+            const newFiles2: File[] = JSON.parse(r as any);
 
-            for (const f of it) {
-                project.createSourceFile(
-                    getExecFileName(f, "check.ts"),
-                    f.content
-                );
-            }
-
-            const newFiles = it.map((f) => {
-                const sourceFile = project.getSourceFile(
-                    getExecFileName(f, "check.ts")
-                );
-
-                if (sourceFile == null) {
-                    throw new Error("sf not found");
-                }
-
-                addInlayParameters(sourceFile);
-
-                return File(f.path, sourceFile.getFullText(), f.overwrite);
-            });
-
-            return E.of(newFiles);
+            return E.of(newFiles2);
         }),
         RTE.map(
             RA.map((file) => {

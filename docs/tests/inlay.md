@@ -22,23 +22,19 @@ It adds inlay hints to identifiers.
 
 ```ts
 const nothing = (_it: string) => void 0;
-
 nothing(/* _it: */ "abc");
 ```
 
 It adds inlay hints to property access expressions.
 
 ```ts
-const nothing2 = {
-  fn: (_it: string) => void 0,
-};
+const nothing2 = { fn: (_it: string) => void 0 };
 nothing2.fn(/* _it: */ "abc");
 ```
 
 ```ts
 class AClass {
   constructor(_props: string) {}
-
   public aMethod = (_it: string) => void 0;
 }
 ```
@@ -61,23 +57,19 @@ It adds inlay hints to n-ary calls to identifiers.
 
 ```ts
 const naryFn = (_it: string, _it2: number, _it3: boolean) => void 0;
-
 naryFn(/* _it: */ "abc", /* _it2: */ 123, /* _it3: */ false);
 ```
 
 It adds inlay hints to n-ary calls to property access expressions.
 
 ```ts
-const naryFnObj = {
-  fn: (_it: string, _it2: number, _it3: boolean) => void 0,
-};
+const naryFnObj = { fn: (_it: string, _it2: number, _it3: boolean) => void 0 };
 naryFnObj.fn(/* _it: */ "abc", /* _it2: */ 123, /* _it3: */ false);
 ```
 
 ```ts
 class AClass3 {
   constructor(_props: string, _props2: number, _props3: boolean) {}
-
   public aMethod3 = (_it: string, _it2: number, _it3: boolean) => void 0;
 }
 ```

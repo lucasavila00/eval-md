@@ -20,7 +20,6 @@ Imports are hoisted to the top of the file.
 
 ```ts
 import { readFile } from "fs";
-readFile;
 ```
 
 ```js
@@ -34,7 +33,6 @@ const delay = () =>
   new Promise(
     /* executor: */ (rs) => setTimeout(/* callback: */ rs, /* ms: */ 1)
   );
-
 await delay();
 ```
 
@@ -42,7 +40,6 @@ We can import stuff one at a time.
 
 ```ts
 import { writeFile } from "fs";
-writeFile;
 ```
 
 ```js
@@ -53,7 +50,6 @@ If the same import statement is repeated, it is de-duplicated.
 
 ```ts
 import { writeFile } from "fs";
-writeFile;
 ```
 
 ```js

@@ -12,7 +12,8 @@
         "ts": "tsc --noEmit",
         "mon": "nodemon --watch ./eval-mds -e md --exec \"ts-node\" --transpileOnly ./src/bin.ts",
         "mont": "nodemon --watch ./src -e ts --exec \"ts-node\" --transpileOnly ./src/bin.ts",
-        "prof": "node -r ts-node/register --inspect-brk ./src/bin.ts "
+        "prof": "node -r ts-node/register --inspect-brk ./src/bin.ts ",
+        "r2": "NODE_OPTIONS=\"-r ts-node/register\" TS_NODE_TRANSPILE_ONLY=true node ./src/bin.ts "
     },
     "keywords": [],
     "author": "",
