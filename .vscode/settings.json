@@ -3,6 +3,7 @@
         "alphanum",
         "bimap",
         "instanceof",
+        "jsonjs",
         "Monoid",
         "overwriteable",
         "Semigroup",

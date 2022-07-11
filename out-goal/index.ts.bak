@@ -1,8 +1,0 @@
-import { table } from "./table";
-
-const add1 = (it: number) => it + 1;
-add1(3);
-
-table(["a", "b"], "c");
-
-export {};

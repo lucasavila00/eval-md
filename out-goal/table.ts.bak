@@ -1,1 +1,0 @@
-export const table = (columns: string[], alias: string) => 1;
