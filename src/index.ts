@@ -11,6 +11,8 @@ import { FileSystem } from "./program/FileSystem";
 import { Logger } from "./program/Logger";
 import { pipe } from "fp-ts/lib/function";
 import { Runner } from "./program/Runner";
+import { defaultLanguageCompilers } from "./lang-executors";
+import { defaultOutputPrinters } from "./printers";
 
 // -------------------------------------------------------------------------------------
 // utils
@@ -65,6 +67,8 @@ const capabilities: Core.Capabilities = {
     fileSystem: FileSystem,
     logger: Logger,
     runner: Runner,
+    languageCompilers: defaultLanguageCompilers,
+    outputPrinters: defaultOutputPrinters,
 };
 
 /**

@@ -3,7 +3,7 @@ import { jsonjsPrinter } from "./jsonjs.printer";
 import { mdPrinter } from "./md.printer";
 import { sqlPrinter } from "./sql.printer";
 
-export const defaultPrinters = [
+export const defaultOutputPrinters = [
     jsonPrinter,
     jsonjsPrinter,
     mdPrinter,

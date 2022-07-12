@@ -439,7 +439,7 @@ export const typescriptLanguageExecutor: Executor.LanguageExecutor = {
                 pipe(
                     RA.zip(refs, acc.toPrint),
                     RA.map(([ref, toPrint]) => ({
-                        inputFile: ref.file,
+                        inputFilePath: ref.file.path,
                         results: acc.execResult[ref.file.path],
                         transformedBlocks: toPrint,
                     }))

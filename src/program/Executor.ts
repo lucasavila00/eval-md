@@ -27,8 +27,9 @@ export type ConsoleExecutionResult = {
 export type LanguageExecutionResult =
     | BlockExecutionResult
     | ConsoleExecutionResult;
+
 export type ExecutedLanguageResult = {
-    readonly inputFile: File;
+    readonly inputFilePath: string;
     readonly results: ReadonlyArray<LanguageExecutionResult>;
     readonly transformedBlocks: ReadonlyArray<MD.FencedCodeBlock>;
 };
@@ -161,14 +162,14 @@ export const run = (
                     results: pipe(
                         compilations,
                         RA.filter(
-                            (it) => it.inputFile.path === reference.file.path
+                            (it) => it.inputFilePath === reference.file.path
                         ),
                         RA.chain((it) => it.results)
                     ),
                     transformedBlocks: pipe(
                         compilations,
                         RA.filter(
-                            (it) => it.inputFile.path === reference.file.path
+                            (it) => it.inputFilePath === reference.file.path
                         ),
                         RA.chain((it) => it.transformedBlocks)
                     ),

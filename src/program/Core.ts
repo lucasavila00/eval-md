@@ -263,7 +263,7 @@ const getMarkdownFiles = (
                                 env.settings.srcDir,
                                 env.settings.outDir
                             ),
-                            MD.print(content) + env.settings.footer ?? "",
+                            MD.print(content) + (env.settings.footer ?? ""),
                             true
                         )
                 )

@@ -27,8 +27,8 @@ export type BlockTransformationResult = {
 export type OutputTransformer = {
     readonly language: InfoString.OutputLanguage;
     readonly print: (
-        result: Executor.LanguageExecutionResult
-    ) => Core.Program<O.Option<BlockTransformationResult>>;
+        result: Executor.BlockExecutionResult
+    ) => Core.Program<BlockTransformationResult>;
 };
 
 const LanguageExecutionResultOrd: Ord.Ord<Executor.LanguageExecutionResult> = {
@@ -116,7 +116,8 @@ const transformPrintedValue = (
                 return RTE.left("Missing printer for output: " + printLanguage);
             }
             return printer.print(result);
-        })
+        }),
+        RTE.map(O.some)
     );
 
 const transformConsoleValue = (

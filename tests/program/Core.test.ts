@@ -10,17 +10,50 @@ import { join } from "path";
 import minimatch from "minimatch";
 import * as O from "fp-ts/Option";
 import * as L from "../../src/program/Logger";
+import * as Endomorphism from "fp-ts/lib/Endomorphism";
+import { OutputTransformer } from "../../src/program/Transformer";
+import { LanguageExecutor } from "../../src/program/Executor";
+import * as RTE from "fp-ts/lib/ReaderTaskEither";
+
 type FileSystemState = Record<string, string>;
 type Log = Array<string>;
 
-const makeCapabilities = () => {
+const joinCwd = (key: string) => join(process.cwd(), key);
+
+const prefixWithCwd: Endomorphism.Endomorphism<FileSystemState> =
+    R.reduceWithIndex<string, string, FileSystemState>(
+        {},
+        (key, acc, content) => ({
+            ...acc,
+            [joinCwd(key)]: content,
+        })
+    );
+
+const rmCwd: Endomorphism.Endomorphism<FileSystemState> = R.reduceWithIndex<
+    string,
+    string,
+    FileSystemState
+>({}, (key, acc, content) => ({
+    ...acc,
+    [key.replace(process.cwd(), "")]: content,
+}));
+
+const makeCapabilities = ({
+    fileSystemState = {},
+    outputPrinters = [],
+    languageCompilers = [],
+}: {
+    fileSystemState?: FileSystemState;
+    outputPrinters?: readonly OutputTransformer[];
+    languageCompilers?: readonly LanguageExecutor[];
+} = {}) => {
     const state: {
         fileSystemState: FileSystemState;
         log: Log;
         command: string;
         executablePath: string[];
     } = {
-        fileSystemState: {},
+        fileSystemState: prefixWithCwd(fileSystemState),
         log: [],
         command: "",
         executablePath: [],
@@ -51,8 +84,8 @@ const makeCapabilities = () => {
             });
             return TE.of(undefined);
         },
-        search: (pattern: string, exclude: ReadonlyArray<string>) =>
-            TE.of(
+        search: (pattern: string, exclude: ReadonlyArray<string>) => {
+            return TE.of(
                 pipe(
                     state.fileSystemState,
                     R.filterWithIndex((path) =>
@@ -66,14 +99,19 @@ const makeCapabilities = () => {
                             )
                     )
                 )
-            ),
+            );
+        },
     };
 
     const runner: Runner.Runner = {
         run: (c, p) => {
             state.command = c;
             state.executablePath = p;
-            return TE.of("\n##eval-md-start##\n{}\n##eval-md-end##\n");
+            return TE.of(
+                "\n##eval-md-start##\n" +
+                    JSON.stringify({}) +
+                    "\n##eval-md-end##\n"
+            );
         },
     };
     const addMsgToLog: (msg: string) => TE.TaskEither<string, void> = (msg) => {
@@ -90,8 +128,8 @@ const makeCapabilities = () => {
         fileSystem,
         runner,
         logger,
-        languageCompilers: [],
-        outputPrinters: [],
+        languageCompilers,
+        outputPrinters,
     };
     return { capabilities, state };
 };
@@ -116,4 +154,203 @@ it("works with no files", async () => {
     expect(state.fileSystemState).toMatchInlineSnapshot(`Object {}`);
     expect(state.command).toMatchInlineSnapshot(`""`);
     expect(state.executablePath).toMatchInlineSnapshot(`Array []`);
+});
+
+it("works with one file, id compiler", async () => {
+    const indexMd = `#hi
+~~~id eval
+~~~
+`;
+    const { capabilities, state } = makeCapabilities({
+        fileSystemState: {
+            "eval-mds/index.md": indexMd,
+            "eval-md.json": JSON.stringify({ footer: null }),
+        },
+        languageCompilers: [
+            {
+                language: "id" as any,
+                execute: (files) =>
+                    RTE.of(
+                        files.map((it) => ({
+                            inputFilePath: it.file.path,
+                            results: [],
+                            transformedBlocks: it.blocks,
+                        }))
+                    ),
+            },
+        ],
+    });
+    const op = await Core.main(capabilities)();
+
+    assertIsRight(op);
+    expect(op.right).toMatchInlineSnapshot(`undefined`);
+    expect(state.log).toMatchInlineSnapshot(`
+        Array [
+          "Checking for configuration file...",
+          "Has config file, parsing...",
+          "Parsed config file...",
+          "Found 1 modules",
+          "Parsing files...",
+          "Finished parsing files...",
+          "Executing code...",
+          "Writing markdown files...",
+        ]
+    `);
+    const files = rmCwd(state.fileSystemState);
+    expect(files["/eval-mds/index.md"]).toBe(indexMd);
+    expect(files["/docs/index.md"]).toMatchInlineSnapshot(`
+        "#hi
+        ~~~id
+
+        ~~~
+        "
+    `);
+});
+
+it("works with one file, id compiler, default printer (json)", async () => {
+    const indexMd = `#hi
+~~~id eval
+some text
+~~~
+`;
+    const { capabilities, state } = makeCapabilities({
+        fileSystemState: {
+            "eval-mds/index.md": indexMd,
+            "eval-md.json": JSON.stringify({ footer: null }),
+        },
+        languageCompilers: [
+            {
+                language: "id" as any,
+                execute: (files) =>
+                    RTE.of(
+                        files.map((it) => ({
+                            inputFilePath: it.file.path,
+                            results: [
+                                {
+                                    _tag: "BlockExecutionResult",
+                                    blockIndex: 0,
+                                    content: JSON.stringify({
+                                        content: "block1",
+                                    }),
+                                },
+                            ],
+                            transformedBlocks: it.blocks,
+                        }))
+                    ),
+            },
+        ],
+        outputPrinters: [
+            {
+                language: "json" as any,
+                print: (r) =>
+                    RTE.of({
+                        content: "content was: " + r.content,
+                        infoString: "id-out",
+                    }),
+            },
+        ],
+    });
+    const op = await Core.main(capabilities)();
+
+    assertIsRight(op);
+    expect(op.right).toMatchInlineSnapshot(`undefined`);
+    expect(state.log).toMatchInlineSnapshot(`
+        Array [
+          "Checking for configuration file...",
+          "Has config file, parsing...",
+          "Parsed config file...",
+          "Found 1 modules",
+          "Parsing files...",
+          "Finished parsing files...",
+          "Executing code...",
+          "Writing markdown files...",
+        ]
+    `);
+    const files = rmCwd(state.fileSystemState);
+    expect(files["/eval-mds/index.md"]).toBe(indexMd);
+    expect(files["/docs/index.md"]).toMatchInlineSnapshot(`
+        "#hi
+        ~~~id
+        some text
+        ~~~
+
+        ~~~id-out
+        content was: {\\"content\\":\\"block1\\"}
+        ~~~
+        "
+    `);
+});
+
+it("works with one file, id compiler, other printer", async () => {
+    const indexMd = `#hi
+~~~id eval --out=id
+some text
+~~~
+`;
+    const { capabilities, state } = makeCapabilities({
+        fileSystemState: {
+            "eval-mds/index.md": indexMd,
+            "eval-md.json": JSON.stringify({ footer: null }),
+        },
+        languageCompilers: [
+            {
+                language: "id" as any,
+                execute: (files) =>
+                    RTE.of(
+                        files.map((it) => ({
+                            inputFilePath: it.file.path,
+                            results: [
+                                {
+                                    _tag: "BlockExecutionResult",
+                                    blockIndex: 0,
+                                    content: JSON.stringify({
+                                        content: "block1",
+                                    }),
+                                },
+                            ],
+                            transformedBlocks: it.blocks,
+                        }))
+                    ),
+            },
+        ],
+        outputPrinters: [
+            {
+                language: "id" as any,
+                print: (r) =>
+                    RTE.of({
+                        content: "content was: " + r.content,
+                        infoString: "id-out",
+                    }),
+            },
+        ],
+    });
+    const op = await Core.main(capabilities)();
+
+    assertIsRight(op);
+    expect(op.right).toMatchInlineSnapshot(`undefined`);
+    expect(state.log).toMatchInlineSnapshot(`
+        Array [
+          "Checking for configuration file...",
+          "Has config file, parsing...",
+          "Parsed config file...",
+          "Found 1 modules",
+          "Parsing files...",
+          "Finished parsing files...",
+          "Executing code...",
+          "Writing markdown files...",
+        ]
+    `);
+    const files = rmCwd(state.fileSystemState);
+    expect(files["/eval-mds/index.md"]).toBe(indexMd);
+    expect(files["/docs/index.md"]).toMatchInlineSnapshot(`
+        "#hi
+        ~~~id
+        some text
+        ~~~
+
+        ~~~id-out
+        content was: {\\"content\\":\\"block1\\"}
+        ~~~
+        "
+    `);
 });
