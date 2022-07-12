@@ -17,6 +17,7 @@ export type FileSystemState = Record<string, string>;
 export type Log = Array<string>;
 
 export const joinCwd = (key: string) => join(process.cwd(), key);
+export const rmCwdOne = (key: string) => key.replace(process.cwd(), "");
 
 export const prefixWithCwd: Endomorphism.Endomorphism<FileSystemState> =
     R.reduceWithIndex<string, string, FileSystemState>(

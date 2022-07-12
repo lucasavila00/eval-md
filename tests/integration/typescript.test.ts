@@ -1,7 +1,7 @@
 import { defaultLanguageCompilers } from "../../src/lang-executors";
 import { defaultOutputPrinters } from "../../src/printers";
 import * as Core from "../../src/program/Core";
-import { makeCapabilities, rmCwd } from "../capabilities";
+import { makeCapabilities, rmCwd, rmCwdOne } from "../capabilities";
 import { assertIsRight } from "../utils";
 
 it("works with no files", async () => {
@@ -46,9 +46,9 @@ it("works with no files", async () => {
         This document used [eval-md](https://lucasavila00.github.io/eval-md/)"
     `);
     expect(state.command).toMatchInlineSnapshot(`"ts-node"`);
-    expect(state.executablePath).toMatchInlineSnapshot(`
+    expect(state.executablePath.map(rmCwdOne)).toMatchInlineSnapshot(`
         Array [
-          "/home/lucas/fluff/eval-md/eval-mds/__entrypoint.exec.ts",
+          "/eval-mds/__entrypoint.exec.ts",
         ]
     `);
 });

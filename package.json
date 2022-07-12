@@ -1,5 +1,5 @@
 {
-    "name": "eval-md",
+    "name": "@degroote22/eval-md",
     "version": "1.0.0",
     "description": "Documentation and snapshot testing had a baby",
     "files": [
