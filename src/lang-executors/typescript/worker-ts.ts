@@ -1,4 +1,3 @@
-import { workerData, isMainThread, parentPort } from "node:worker_threads";
 import { File } from "../../program/FileSystem";
 import {
     Project,
@@ -82,11 +81,9 @@ const addInlayParameters = (sourceFile: SourceFile) => {
     });
 };
 
-if (isMainThread) {
-    throw new Error("is a worker");
-} else {
-    const it: File[] = JSON.parse(workerData);
-
+export const transformWithTsMorph = (
+    it: ReadonlyArray<File>
+): ReadonlyArray<File> => {
     const project = new Project({
         tsConfigFilePath: "tsconfig.json",
     });
@@ -109,5 +106,5 @@ if (isMainThread) {
         return File(f.path, sourceFile.getFullText());
     });
 
-    parentPort?.postMessage(JSON.stringify(newFiles));
-}
+    return newFiles;
+};

@@ -12,6 +12,7 @@ export type Settings = {
     readonly typescript: {
         readonly inlayHints: boolean;
     };
+    readonly imports: Record<string, string>;
 };
 
 export const getDefaultSettings = (): Settings => ({
@@ -21,4 +22,5 @@ export const getDefaultSettings = (): Settings => ({
     runtimeMeta: {},
     footer: "\n---\n\nThis document used [eval-md](https://lucasavila00.github.io/eval-md/)",
     typescript: { inlayHints: false },
+    imports: {},
 });

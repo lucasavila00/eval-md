@@ -238,7 +238,7 @@ text(
 ````
 
 ```ts
-import { Anchor, text } from "../../src/md-writer";
+import { Anchor, text } from "eval-md/lib/md-writer";
 text(
   /* listOfStrings: */ "Check out the",
   Anchor(

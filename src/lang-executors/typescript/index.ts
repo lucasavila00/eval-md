@@ -18,11 +18,11 @@ import * as parser from "@babel/parser";
 import traverse from "@babel/traverse";
 import generator from "@babel/generator";
 import { TraverseOptions } from "@babel/traverse";
-import { Worker } from "node:worker_threads";
 import * as t from "@babel/types";
 import { getExecFileName } from "./shared";
 import { TransportedError } from "../../program/Errors";
 import * as TE from "fp-ts/lib/TaskEither";
+import { transformWithTsMorph } from "./worker-ts";
 // -------------------------------------------------------------------------------------
 // model
 // -------------------------------------------------------------------------------------
@@ -91,9 +91,17 @@ const importsDeleteVisitor = (imports: string[]): TraverseOptions => ({
     },
 });
 
-const importsToCommentVisitor = (imports: string[]): TraverseOptions => ({
+const importsToCommentVisitor = (
+    imports: string[],
+    importMap: Record<string, string>
+): TraverseOptions => ({
     ImportDeclaration(path) {
         imports.push(generator(path.node).code);
+        Object.entries(importMap).forEach(([k, v]) => {
+            if (path.node.source.value.includes(k)) {
+                path.node.source.value = path.node.source.value.replace(k, v);
+            }
+        });
 
         const x =
             generator(path.node)
@@ -182,7 +190,12 @@ const getAnnotatedSourceCode =
                         } else {
                             const out = transformTs(
                                 block.content,
-                                [importsToCommentVisitor(imports)],
+                                [
+                                    importsToCommentVisitor(
+                                        imports,
+                                        env.settings.imports
+                                    ),
+                                ],
                                 true
                             );
 
@@ -289,30 +302,9 @@ const toPrint =
                   ),
                   RTE.chain(() => getAnnotatedSourceCode(refs, false)),
                   RTE.chain((it) => (deps) => async () => {
-                      deps.logger.debug("Spawning ts-morph worker")();
-                      const p = new Promise((resolve, reject) => {
-                          const worker = new Worker(
-                              path.join(__dirname, "worker.js"),
-                              {
-                                  workerData: JSON.stringify(it),
-                              }
-                          );
-                          worker.on("message", resolve);
-                          worker.on("error", reject);
-                          worker.on("exit", (code) => {
-                              if (code !== 0)
-                                  reject(
-                                      new Error(
-                                          `Worker stopped with exit code ${code}`
-                                      )
-                                  );
-                          });
-                      });
-                      const r = await p;
-                      deps.logger.debug("Ts-morph worker finished")();
-                      const newFiles2: File[] = JSON.parse(r as any);
-
-                      return E.of(newFiles2);
+                      const result = transformWithTsMorph(it);
+                      deps.logger.debug("Ts-morph finished")();
+                      return E.of(result);
                   }),
                   RTE.map(
                       RA.map((file) => {
