@@ -9,10 +9,9 @@ import * as InfoString from "./InfoStringParser";
 import * as Transformer from "./Transformer";
 import * as Executor from "./Executor";
 import { Logger } from "./Logger";
-import { Settings } from "./Config";
-import { defaultLanguageCompilers } from "../lang-executors";
+import { getDefaultSettings, Settings } from "./Config";
+
 import { Runner } from "./Runner";
-import { defaultPrinters } from "../printers";
 
 const CONFIG_FILE_NAME = "eval-md.json";
 
@@ -126,15 +125,6 @@ const readSourceFiles: Program<ReadonlyArray<File>> = pipe(
 // -------------------------------------------------------------------------------------
 // config
 // -------------------------------------------------------------------------------------
-
-export const getDefaultSettings = (): Settings => ({
-    languageCompilers: defaultLanguageCompilers,
-    srcDir: "eval-mds",
-    outDir: "docs",
-    exclude: [],
-    outputPrinters: defaultPrinters,
-    runtimeMeta: {},
-});
 
 const hasConfiguration: Effect<boolean> = pipe(
     RTE.ask<Capabilities>(),
@@ -271,7 +261,7 @@ const getMarkdownFiles = (
                                 env.settings.srcDir,
                                 env.settings.outDir
                             ),
-                            MD.print(content),
+                            MD.print(content) + env.settings.footer ?? "",
                             true
                         )
                 )
