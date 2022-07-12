@@ -23,7 +23,7 @@ export const testHeader = (title: string, url: string, navOrder = 10) => {
     const link = text(
         "Check out the",
         Anchor("original file", url),
-        "to see the uncompiled source."
+        "to see the original source."
     );
 
     return frontMatter(title, navOrder) + tocTemplate + "\n" + link;

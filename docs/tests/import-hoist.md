@@ -14,12 +14,13 @@ layout: default
 {:toc}
 </details>
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/import-hoist.md) to see the uncompiled source.
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/import-hoist.md) to see the original source.
 
 Imports are hoisted to the top of the file.
 
 ```ts
 import { readFile } from "fs";
+readFile;
 ```
 
 ```js
@@ -29,7 +30,10 @@ import { readFile } from "fs";
 Even in environemnts without top level await, it works.
 
 ```ts
-const delay = () => new Promise((rs) => setTimeout(rs, 1));
+const delay = () =>
+  new Promise(
+    /* executor: */ (rs) => setTimeout(/* callback: */ rs, /* ms: */ 1)
+  );
 await delay();
 ```
 
@@ -37,6 +41,7 @@ We can import stuff one at a time.
 
 ```ts
 import { writeFile } from "fs";
+writeFile;
 ```
 
 ```js
@@ -47,6 +52,7 @@ If the same import statement is repeated, it is de-duplicated.
 
 ```ts
 import { writeFile } from "fs";
+writeFile;
 ```
 
 ```js

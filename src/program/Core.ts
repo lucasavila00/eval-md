@@ -1,6 +1,6 @@
 import { File, FileSystem } from "./FileSystem";
 import * as RTE from "fp-ts/ReaderTaskEither";
-import { constVoid, flow, hole, pipe } from "fp-ts/function";
+import { constVoid, flow, pipe } from "fp-ts/function";
 import * as path from "path";
 import * as RA from "fp-ts/ReadonlyArray";
 import * as TE from "fp-ts/TaskEither";
@@ -127,17 +127,13 @@ const readSourceFiles: Program<ReadonlyArray<File>> = pipe(
 // config
 // -------------------------------------------------------------------------------------
 
-console.error("fix");
 export const getDefaultSettings = (): Settings => ({
     languageCompilers: defaultLanguageCompilers,
-    srcDir: process.env["EVAL_MD_SRC_DIR"] ?? "eval-mds",
-    outDir: process.env["EVAL_MD_OUT_DIR"] ?? "docs",
+    srcDir: "eval-mds",
+    outDir: "docs",
     exclude: [],
     outputPrinters: defaultPrinters,
-    runtimeMeta: {
-        srcUrl: "https://github.com/lucasavila00/eval-md/tree/main/",
-        docsUrl: "https://lucasavila00.github.io/eval-md/",
-    },
+    runtimeMeta: {},
 });
 
 const hasConfiguration: Effect<boolean> = pipe(
@@ -157,27 +153,23 @@ const readConfiguration: Effect<File> = pipe(
     RTE.chain(() => readFile(path.join(process.cwd(), CONFIG_FILE_NAME)))
 );
 
-console.error("implement me");
 const parseConfiguration =
-    (_defaultSettings: Settings) =>
-    (_file: File): Effect<Settings> =>
-        hole();
-//   pipe(
-//     RTE.ask<Capabilities>(),
-//     RTE.chainTaskEitherK(({ logger }) =>
-//       pipe(
-//         E.parseJSON(file.content, toErrorMsg),
-//         TE.fromEither,
-//         TE.chainFirst(() => logger.info(`Found configuration file`)),
-//         TE.chainFirst(() => logger.debug(`Parsing configuration file found at: ${file.path}`)),
-//         TE.chain(Config.decode),
-//         TE.bimap(
-//           (decodeError) => `Invalid configuration file detected:\n${decodeError}`,
-//           (settings) => ({ ...defaultSettings, ...settings })
-//         )
-//       )
-//     )
-//   )
+    (defaultSettings: Settings) =>
+    (file: File): Effect<Settings> =>
+    (deps) =>
+        pipe(
+            deps.logger.debug("Has config file, parsing..."),
+            TE.chain(() =>
+                TE.tryCatch(
+                    async () => {
+                        const settings = JSON.parse(file.content);
+                        return { ...defaultSettings, ...settings };
+                    },
+                    (e) => e as TransportedError
+                )
+            ),
+            TE.chainFirst(() => deps.logger.debug("Parsed config file..."))
+        );
 
 const useDefaultSettings = (defaultSettings: Settings): Effect<Settings> =>
     pipe(
@@ -290,18 +282,6 @@ const getMarkdownFiles = (
 const writeMarkdownFiles = (files: ReadonlyArray<File>): Program<void> =>
     pipe(
         RTE.ask<Environment, string>(),
-        // RTE.chainFirst<Environment, string, Environment, void>(
-        //     ({ fileSystem, logger, settings }) => {
-        //         const outPattern = path.join(settings.outDir, "**/*.ts.md");
-        //         return pipe(
-        //             logger.debug(
-        //                 `Cleaning up docs folder: deleting ${outPattern}`
-        //             ),
-        //             TE.chain(() => fileSystem.remove(outPattern)),
-        //             RTE.fromTaskEither
-        //         );
-        //     }
-        // ),
         RTE.chainTaskEitherK((C) =>
             pipe(
                 C.logger.debug("Writing markdown files..."),

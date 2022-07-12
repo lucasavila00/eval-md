@@ -14,18 +14,18 @@ layout: default
 {:toc}
 </details>
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/console.md) to see the uncompiled source.
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/console.md) to see the original source.
 
 # Capturing Calls
 
 Local calls to console are captured, and the results shown as a blockquote.
 
 ```ts
-console.log("hi, log");
-console.error("hi, error");
-console.warn("hi, warn");
-console.info("hi, info");
-console.debug("hi, debug");
+console.log(/* message: */ "hi, log");
+console.error(/* message: */ "hi, error");
+console.warn(/* message: */ "hi, warn");
+console.info(/* message: */ "hi, info");
+console.debug(/* message: */ "hi, debug");
 ```
 
 > log : hi, log
@@ -44,7 +44,7 @@ Logs are shown in the block they're used, not in the block they're declared.
 
 ```ts
 const fn = () => {
-  console.log("hi2");
+  console.log(/* message: */ "hi2");
 };
 ```
 

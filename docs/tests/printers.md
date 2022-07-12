@@ -14,7 +14,7 @@ layout: default
 {:toc}
 </details>
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/printers.md) to see the uncompiled source.
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/printers.md) to see the original source.
 
 ```ts
 const obj = { a: 1 };
@@ -232,13 +232,21 @@ import { Anchor, text } from "../../src/md-writer";
 text(
     "Check out the",
     Anchor("original file", __meta.srcUrl + __meta.inputPath),
-    "to see the uncompiled source."
+    "to see the original source."
 );
 ```
 ````
 
 ```ts
 import { Anchor, text } from "../../src/md-writer";
+text(
+  /* listOfStrings: */ "Check out the",
+  Anchor(
+    /* text: */ "original file",
+    /* url: */ __meta.srcUrl + __meta.inputPath
+  ),
+  "to see the original source."
+);
 ```
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/printers.md) to see the uncompiled source.
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/printers.md) to see the original source.

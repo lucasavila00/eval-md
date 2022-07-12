@@ -110,6 +110,6 @@ import { Anchor, text } from "../../src/md-writer";
 text(
     "Check out the",
     Anchor("original file", __meta.srcUrl + __meta.inputPath),
-    "to see the uncompiled source."
+    "to see the original source."
 );
 ```

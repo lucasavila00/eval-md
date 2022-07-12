@@ -14,7 +14,7 @@ layout: default
 {:toc}
 </details>
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/formatting.md) to see the uncompiled source.
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/formatting.md) to see the original source.
 
 TS code is formatted by prettier
 

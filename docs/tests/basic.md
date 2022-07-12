@@ -14,7 +14,7 @@ layout: default
 {:toc}
 </details>
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/basic.md) to see the uncompiled source.
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/basic.md) to see the original source.
 
 # Not calling eval
 
@@ -81,7 +81,7 @@ nothing2();
 ````
 
 ```ts
-const nothing2 = () => nothing(123);
+const nothing2 = () => nothing(/* _arg: */ 123);
 nothing2();
 ```
 
@@ -96,7 +96,7 @@ add1(3);
 
 ```ts
 const add1 = (it: number) => it + 1;
-add1(3);
+add1(/* it: */ 3);
 ```
 
 ```json

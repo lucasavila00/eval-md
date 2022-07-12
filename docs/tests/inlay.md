@@ -14,7 +14,7 @@ layout: default
 {:toc}
 </details>
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/inlay.md) to see the uncompiled source.
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/inlay.md) to see the original source.
 
 # Unary calls
 
@@ -22,14 +22,14 @@ It adds inlay hints to identifiers.
 
 ```ts
 const nothing = (_it: string) => void 0;
-nothing("abc");
+nothing(/* _it: */ "abc");
 ```
 
 It adds inlay hints to property access expressions.
 
 ```ts
 const nothing2 = { fn: (_it: string) => void 0 };
-nothing2.fn("abc");
+nothing2.fn(/* _it: */ "abc");
 ```
 
 ```ts
@@ -42,13 +42,13 @@ class AClass {
 It adds inlay hints to class constructors.
 
 ```ts
-const aClassInstance = new AClass("abc");
+const aClassInstance = new AClass(/* _props: */ "abc");
 ```
 
 It adds inlay hints to class methods.
 
 ```ts
-aClassInstance.aMethod("def");
+aClassInstance.aMethod(/* _it: */ "def");
 ```
 
 # N-ary calls
@@ -57,14 +57,14 @@ It adds inlay hints to n-ary calls to identifiers.
 
 ```ts
 const naryFn = (_it: string, _it2: number, _it3: boolean) => void 0;
-naryFn("abc", 123, false);
+naryFn(/* _it: */ "abc", /* _it2: */ 123, /* _it3: */ false);
 ```
 
 It adds inlay hints to n-ary calls to property access expressions.
 
 ```ts
 const naryFnObj = { fn: (_it: string, _it2: number, _it3: boolean) => void 0 };
-naryFnObj.fn("abc", 123, false);
+naryFnObj.fn(/* _it: */ "abc", /* _it2: */ 123, /* _it3: */ false);
 ```
 
 ```ts
@@ -85,11 +85,15 @@ const aClassInstance3 = new AClass3("abc", 123, false);
 ````
 
 ```ts
-const aClassInstance3 = new AClass3("abc", 123, false);
+const aClassInstance3 = new AClass3(
+  /* _props: */ "abc",
+  /* _props2: */ 123,
+  /* _props3: */ false
+);
 ```
 
 It adds inlay hints to n-ary class methods.
 
 ```ts
-aClassInstance3.aMethod3("def", 123, false);
+aClassInstance3.aMethod3(/* _it: */ "def", /* _it2: */ 123, /* _it3: */ false);
 ```

@@ -14,7 +14,7 @@ layout: default
 {:toc}
 </details>
 
-Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/error.md) to see the uncompiled source.
+Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/eval-mds/tests/error.md) to see the original source.
 
 Errors can be caught and shown, explicitly. Errors that are thrown but not explictly will stop the markdown generation.
 
@@ -25,7 +25,7 @@ throw new Error("def");
 ````
 
 ```ts
-throw new Error("def");
+throw new Error(/* message: */ "def");
 ```
 
 ```js
@@ -38,7 +38,7 @@ We can create a variable with const in an error block...
 
 ```ts
 const a = "abc";
-throw new Error(a);
+throw new Error(/* message: */ a);
 ```
 
 ```js
@@ -60,7 +60,7 @@ And a third time, we can re-create the const.
 
 ```ts
 const a = "abc";
-throw new Error(a);
+throw new Error(/* message: */ a);
 ```
 
 ```js
