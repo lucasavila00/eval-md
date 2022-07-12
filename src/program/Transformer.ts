@@ -33,30 +33,28 @@ export type OutputTransformer = {
     ) => TE.TaskEither<TransportedError, BlockTransformationResult>;
 };
 
-const LanguageExecutionResultOrd: Ord.Ord<Executor.LanguageExecutionResult> = {
-    equals: (a, b) =>
-        a.blockIndex === b.blockIndex &&
-        a._tag === b._tag &&
-        a.content === b.content,
-    compare: (first, second) => {
-        if (first._tag === second._tag) {
+export const LanguageExecutionResultOrd: Ord.Ord<Executor.LanguageExecutionResult> =
+    {
+        equals: (a, b) =>
+            a.blockIndex === b.blockIndex &&
+            a._tag === b._tag &&
+            a.content === b.content,
+        compare: (first, second) => {
+            if (
+                first._tag === "BlockExecutionResult" &&
+                second._tag === "ConsoleExecutionResult"
+            ) {
+                return 1;
+            }
+            if (
+                first._tag === "ConsoleExecutionResult" &&
+                second._tag === "BlockExecutionResult"
+            ) {
+                return -1;
+            }
             return 0;
-        }
-        if (
-            first._tag === "BlockExecutionResult" &&
-            second._tag === "ConsoleExecutionResult"
-        ) {
-            return 1;
-        }
-        if (
-            first._tag === "ConsoleExecutionResult" &&
-            second._tag === "BlockExecutionResult"
-        ) {
-            return -1;
-        }
-        return 0;
-    },
-};
+        },
+    };
 
 // -------------------------------------------------------------------------------------
 // transformers
