@@ -4,14 +4,11 @@ import * as Core from "../../src/program/Core";
 import { makeCapabilities, rmCwd } from "../capabilities";
 import { assertIsRight } from "../utils";
 
-console.error("DI ast like docs-ts, remove worker for simplicity");
-
 it("works with no files", async () => {
     const indexMd = `~~~ts eval
 1+1
 ~~~
     `;
-    console.error("real executor");
     const { capabilities, state } = makeCapabilities({
         languageCompilers: defaultLanguageCompilers,
         outputPrinters: defaultOutputPrinters,
