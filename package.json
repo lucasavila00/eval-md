@@ -1,8 +1,13 @@
 {
     "name": "eval-md",
     "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
+    "description": "Documentation and snapshot testing had a baby",
+    "files": [
+        "lib"
+    ],
+    "main": "lib/index.js",
+    "bin": "lib/bin.js",
+    "typings": "lib/index.d.ts",
     "scripts": {
         "test": "jest",
         "lint": "eslint .",
@@ -13,11 +18,19 @@
         "mon": "nodemon --watch ./eval-mds -e md --exec \"ts-node\" --transpileOnly ./src/bin.ts",
         "mont": "nodemon --watch ./src -e ts --exec \"ts-node\" --transpileOnly ./src/bin.ts",
         "prof": "node -r ts-node/register --inspect-brk ./src/bin.ts ",
-        "watch": "EVAL_MD_WATCH=yes NODE_OPTIONS=\"-r ts-node/register\" TS_NODE_TRANSPILE_ONLY=true node ./src/bin.ts"
+        "watch": "EVAL_MD_WATCH=yes NODE_OPTIONS=\"-r ts-node/register\" TS_NODE_TRANSPILE_ONLY=true node ./src/bin.ts",
+        "build": "rm -rf dist && tsc -p ./tsconfig.build.json && tsc -p ./tsconfig.build-es6.json && ts-node scripts/build",
+        "prepublishOnly": "ts-node scripts/pre-publish",
+        "release": "ts-node scripts/release"
     },
+    "homepage": "https://lucasavila00.github.io/eval-md/",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/lucasavila00/eval-md.git"
+    },
+    "author": "Lucas Ávila",
+    "license": "MIT",
     "keywords": [],
-    "author": "",
-    "license": "ISC",
     "dependencies": {
         "@babel/core": "^7.18.6",
         "@babel/generator": "^7.18.7",
