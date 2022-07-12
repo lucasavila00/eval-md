@@ -25,6 +25,8 @@ export type Capabilities = {
     readonly fileSystem: FileSystem;
     readonly logger: Logger;
     readonly runner: Runner;
+    readonly languageCompilers: ReadonlyArray<Executor.LanguageExecutor>;
+    readonly outputPrinters: ReadonlyArray<Transformer.OutputTransformer>;
 };
 
 export type Effect<A> = RTE.ReaderTaskEither<Capabilities, TransportedError, A>;

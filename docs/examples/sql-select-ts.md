@@ -17,7 +17,14 @@ layout: default
 # With - Common Table Expressions
 
 ```ts
-
+import {
+  table,
+  dsql as sql,
+  with_,
+  SafeString,
+  select,
+  withR,
+} from "sql-select-ts";
 ```
 
 ```ts

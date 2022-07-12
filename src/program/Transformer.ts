@@ -109,7 +109,7 @@ const transformPrintedValue = (
     pipe(
         RTE.ask<Core.Environment, Core.TransportedError>(),
         RTE.chain((env) => {
-            const printer = env.settings.outputPrinters.find(
+            const printer = env.outputPrinters.find(
                 (it) => it.language === printLanguage
             );
             if (printer == null) {

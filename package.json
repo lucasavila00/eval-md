@@ -13,8 +13,7 @@
         "mon": "nodemon --watch ./eval-mds -e md --exec \"ts-node\" --transpileOnly ./src/bin.ts",
         "mont": "nodemon --watch ./src -e ts --exec \"ts-node\" --transpileOnly ./src/bin.ts",
         "prof": "node -r ts-node/register --inspect-brk ./src/bin.ts ",
-        "watch": "EVAL_MD_WATCH=yes NODE_OPTIONS=\"-r ts-node/register\" TS_NODE_TRANSPILE_ONLY=true node ./src/bin.ts",
-        "e2e:test1": "EVAL_MD_WILL_THROW=yes EVAL_MD_SRC_DIR=e2e/test1 EVAL_MD_OUT_DIR=e2e/out/test1 NODE_OPTIONS=\"-r ts-node/register\" TS_NODE_TRANSPILE_ONLY=true node ./src/bin.ts > e2e/out/test1/stdout.txt"
+        "watch": "EVAL_MD_WATCH=yes NODE_OPTIONS=\"-r ts-node/register\" TS_NODE_TRANSPILE_ONLY=true node ./src/bin.ts"
     },
     "keywords": [],
     "author": "",
@@ -47,6 +46,7 @@
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-jest": "^26.5.3",
         "jest": "^28.1.2",
+        "minimatch": "^5.1.0",
         "nodemon": "^2.0.18",
         "prettier": "^2.7.1",
         "snapshot-diff": "^0.9.0",

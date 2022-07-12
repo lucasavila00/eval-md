@@ -118,7 +118,7 @@ const assertAllPrintBlocksHaveCompilers = (
                 files,
                 RA.chain((it) => fencedCodeBlocks(it.ast)),
                 RA.map((it) =>
-                    assertBlockHasCompiler(it, env.settings.languageCompilers)
+                    assertBlockHasCompiler(it, env.languageCompilers)
                 ),
                 E.sequenceArray,
                 E.map((_arr) => void 0)
@@ -142,10 +142,14 @@ export const run = (
         RTE.chain(() => RTE.ask()),
         RTE.chain((env) =>
             pipe(
-                env.settings.languageCompilers,
-                RTE.traverseArray((compiler) =>
-                    compiler.execute(compilerInputs(files, compiler.language))
-                )
+                env.languageCompilers,
+                RTE.traverseArray((compiler) => {
+                    const inputs = compilerInputs(files, compiler.language);
+                    if (inputs.length === 0) {
+                        return RTE.of([]);
+                    }
+                    return compiler.execute(inputs);
+                })
             )
         ),
         RTE.map(RA.flatten),

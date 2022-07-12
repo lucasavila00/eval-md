@@ -100,8 +100,8 @@ const importsToCommentVisitor = (imports: string[]): TraverseOptions => ({
                 .map((it) => "eval-md-hoisted\n" + it)
                 .join("\n") + "\n";
 
+        path.replaceWith(t.emptyStatement());
         path.addComment("leading", x);
-        path.remove();
     },
 });
 const transformTs = (
@@ -343,7 +343,6 @@ const toPrint = (
 
                 return pipe(
                     acc,
-
                     RA.map(([head, ...tail]) =>
                         FencedCodeBlock(
                             tail.join("\n"),
