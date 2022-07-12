@@ -9,13 +9,13 @@ module.exports = {
         "src/md-writer/**/*.ts",
     ],
     coverageReporters: ["clover", "json", "lcov", "text", "html"],
-    // coverageThreshold: {
-    //     global: {
-    //         branches: 100,
-    //         functions: 100,
-    //         lines: 100,
-    //         statements: 100,
-    //     },
-    // },
+    coverageThreshold: {
+        global: {
+            branches: 100,
+            functions: 100,
+            lines: 100,
+            statements: 100,
+        },
+    },
     testMatch: ["<rootDir>/tests/**/*.(test).(js|jsx|ts)"],
 };

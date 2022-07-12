@@ -22,6 +22,7 @@ import { Worker } from "node:worker_threads";
 import * as t from "@babel/types";
 import { getExecFileName } from "./shared";
 import { TransportedError } from "../../program/Errors";
+import * as TE from "fp-ts/lib/TaskEither";
 // -------------------------------------------------------------------------------------
 // model
 // -------------------------------------------------------------------------------------
@@ -272,101 +273,119 @@ const getExecutableFilesAndIndex = (
 
 type FileBlocks = ReadonlyArray<MD.FencedCodeBlock>;
 
-const toPrint = (
-    refs: ReadonlyArray<Executor.CompilerInputFile>
-): Program<ReadonlyArray<FileBlocks>> =>
-    pipe(
-        RTE.ask<Core.Environment, TransportedError>(),
-        RTE.chainFirst(({ logger }) =>
-            RTE.fromTaskEither(logger.debug("Processing code with ts-morph..."))
-        ),
-        RTE.chain(() => getAnnotatedSourceCode(refs, false)),
-        RTE.chain((it) => (deps) => async () => {
-            deps.logger.debug("Spawning ts-morph worker")();
-            const p = new Promise((resolve, reject) => {
-                const worker = new Worker(path.join(__dirname, "worker.js"), {
-                    workerData: JSON.stringify(it),
-                });
-                worker.on("message", resolve);
-                worker.on("error", reject);
-                worker.on("exit", (code) => {
-                    if (code !== 0)
-                        reject(
-                            new Error(`Worker stopped with exit code ${code}`)
-                        );
-                });
-            });
-            const r = await p;
-            deps.logger.debug("Ts-morph worker finished")();
-            const newFiles2: File[] = JSON.parse(r as any);
+const toPrint =
+    (
+        refs: ReadonlyArray<Executor.CompilerInputFile>
+    ): Program<ReadonlyArray<FileBlocks>> =>
+    (deps) =>
+        !deps.settings.typescript.inlayHints
+            ? TE.of(refs.map((it) => it.blocks))
+            : pipe(
+                  RTE.ask<Core.Environment, TransportedError>(),
+                  RTE.chainFirst(({ logger }) =>
+                      RTE.fromTaskEither(
+                          logger.debug("Processing code with ts-morph...")
+                      )
+                  ),
+                  RTE.chain(() => getAnnotatedSourceCode(refs, false)),
+                  RTE.chain((it) => (deps) => async () => {
+                      deps.logger.debug("Spawning ts-morph worker")();
+                      const p = new Promise((resolve, reject) => {
+                          const worker = new Worker(
+                              path.join(__dirname, "worker.js"),
+                              {
+                                  workerData: JSON.stringify(it),
+                              }
+                          );
+                          worker.on("message", resolve);
+                          worker.on("error", reject);
+                          worker.on("exit", (code) => {
+                              if (code !== 0)
+                                  reject(
+                                      new Error(
+                                          `Worker stopped with exit code ${code}`
+                                      )
+                                  );
+                          });
+                      });
+                      const r = await p;
+                      deps.logger.debug("Ts-morph worker finished")();
+                      const newFiles2: File[] = JSON.parse(r as any);
 
-            return E.of(newFiles2);
-        }),
-        RTE.map(
-            RA.map((file) => {
-                const lines = file.content.split("\n");
+                      return E.of(newFiles2);
+                  }),
+                  RTE.map(
+                      RA.map((file) => {
+                          const lines = file.content.split("\n");
 
-                const acc: string[][] = [];
+                          const acc: string[][] = [];
 
-                let skipping = true;
-                let hoisted = 0;
-                for (const line of lines) {
-                    if (line.startsWith("// end-eval-block")) {
-                        skipping = true;
-                        continue;
-                    }
-                    if (line.startsWith("// start-eval-block")) {
-                        acc.push([]);
-                        skipping = false;
-                    }
-                    if (!skipping) {
-                        if (line.startsWith("/*eval-md-hoisted")) {
-                            hoisted++;
-                            continue;
-                        }
+                          let skipping = true;
+                          let hoisted = 0;
+                          for (const line of lines) {
+                              if (line.startsWith("// end-eval-block")) {
+                                  skipping = true;
+                                  continue;
+                              }
+                              if (line.startsWith("// start-eval-block")) {
+                                  acc.push([]);
+                                  skipping = false;
+                              }
+                              if (!skipping) {
+                                  if (line.startsWith("/*eval-md-hoisted")) {
+                                      hoisted++;
+                                      continue;
+                                  }
 
-                        if (hoisted > 0) {
-                            if (line.startsWith("*/")) {
-                                hoisted--;
-                                acc[acc.length - 1].push(
-                                    line.replace("*/", "")
-                                );
-                                continue;
-                            }
-                        }
+                                  if (hoisted > 0) {
+                                      if (line.startsWith("*/")) {
+                                          hoisted--;
+                                          acc[acc.length - 1].push(
+                                              line.replace("*/", "")
+                                          );
+                                          continue;
+                                      }
+                                  }
 
-                        acc[acc.length - 1].push(line);
-                    }
-                }
+                                  acc[acc.length - 1].push(line);
+                              }
+                          }
 
-                return pipe(
-                    acc,
-                    RA.map(([head, ...tail]) =>
-                        FencedCodeBlock(
-                            tail.join("\n"),
-                            JSON.parse(head.replace("// start-eval-block ", ""))
-                        )
-                    )
-                );
-            })
-        ),
-        RTE.map(
-            RA.map(
-                RA.map((block) => ({
-                    ...block,
-                    content: prettier
-                        .format(block.content, {
-                            filepath: "it.ts",
-                        })
-                        .trim(),
-                }))
-            )
-        ),
-        RTE.chainFirst(
-            (_it) => (deps) =>
-                deps.logger.debug("Finished formatting with ts-morph...")
-        )
-    );
+                          return pipe(
+                              acc,
+                              RA.map(([head, ...tail]) =>
+                                  FencedCodeBlock(
+                                      tail.join("\n"),
+                                      JSON.parse(
+                                          head.replace(
+                                              "// start-eval-block ",
+                                              ""
+                                          )
+                                      )
+                                  )
+                              )
+                          );
+                      })
+                  ),
+                  RTE.map(
+                      RA.map(
+                          RA.map((block) => ({
+                              ...block,
+                              content: prettier
+                                  .format(block.content, {
+                                      filepath: "it.ts",
+                                  })
+                                  .trim(),
+                          }))
+                      )
+                  ),
+                  RTE.chainFirst(
+                      (_it) => (deps) =>
+                          deps.logger.debug(
+                              "Finished formatting with ts-morph..."
+                          )
+                  )
+              )(deps);
 
 // -------------------------------------------------------------------------------------
 // runner

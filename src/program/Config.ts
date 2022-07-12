@@ -8,6 +8,10 @@ export type Settings = {
     readonly exclude: ReadonlyArray<string>;
     readonly runtimeMeta: Record<string, string>;
     readonly footer: string | null;
+
+    readonly typescript: {
+        readonly inlayHints: boolean;
+    };
 };
 
 export const getDefaultSettings = (): Settings => ({
@@ -16,4 +20,5 @@ export const getDefaultSettings = (): Settings => ({
     exclude: [],
     runtimeMeta: {},
     footer: "\n---\n\nThis document used [eval-md](https://lucasavila00.github.io/eval-md/)",
+    typescript: { inlayHints: false },
 });
