@@ -21,7 +21,7 @@ const exec =
             });
         });
 
-export const main = exec("npm publish", {
+export const main = exec("npm publish --access=public", {
     cwd: DIST,
 });
 
