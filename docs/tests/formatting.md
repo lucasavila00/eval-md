@@ -20,7 +20,7 @@ TS code is formatted by prettier
 
 <!-- prettier-ignore-start -->
 ````md
-```ts eval --hideout --meta
+```ts eval --out=hide --meta
 123 +                                456 + 789;
 ```
 ````

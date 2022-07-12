@@ -382,7 +382,7 @@ const spawnTsNode = (): Program<SpawnResult> =>
                 settings.srcDir,
                 "index.exec.ts"
             );
-            return Runner.run(command, ["--transpileOnly", executablePath]);
+            return Runner.run(command, [executablePath]);
         }),
         RTE.map((value) => {
             let capturing = false;

@@ -7,14 +7,14 @@ testHeader("Inlay Hints", __meta.srcUrl + __meta.inputPath, 10);
 
 It adds inlay hints to identifiers.
 
-```ts eval --hideout
+```ts eval --out=hide
 const nothing = (_it: string) => void 0;
 nothing("abc");
 ```
 
 It adds inlay hints to property access expressions.
 
-```ts eval --hideout
+```ts eval --out=hide
 const nothing2 = { fn: (_it: string) => void 0 };
 nothing2.fn("abc");
 ```
@@ -34,7 +34,7 @@ const aClassInstance = new AClass("abc");
 
 It adds inlay hints to class methods.
 
-```ts eval --hideout
+```ts eval --out=hide
 aClassInstance.aMethod("def");
 ```
 
@@ -42,14 +42,14 @@ aClassInstance.aMethod("def");
 
 It adds inlay hints to n-ary calls to identifiers.
 
-```ts eval --hideout
+```ts eval --out=hide
 const naryFn = (_it: string, _it2: number, _it3: boolean) => void 0;
 naryFn("abc", 123, false);
 ```
 
 It adds inlay hints to n-ary calls to property access expressions.
 
-```ts eval --hideout
+```ts eval --out=hide
 const naryFnObj = { fn: (_it: string, _it2: number, _it3: boolean) => void 0 };
 naryFnObj.fn("abc", 123, false);
 ```
@@ -71,6 +71,6 @@ const aClassInstance3 = new AClass3("abc", 123, false);
 
 It adds inlay hints to n-ary class methods.
 
-```ts eval --hideout
+```ts eval --out=hide
 aClassInstance3.aMethod3("def", 123, false);
 ```

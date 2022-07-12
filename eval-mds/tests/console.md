@@ -7,7 +7,7 @@ testHeader("Console", __meta.srcUrl + __meta.inputPath, 12);
 
 Local calls to console are captured, and the results shown as a blockquote.
 
-```ts eval --hideout
+```ts eval --out=hide
 console.log("hi, log");
 console.error("hi, error");
 console.warn("hi, warn");
@@ -19,7 +19,7 @@ console.debug("hi, debug");
 
 Logs are shown in the block they're used, not in the block they're declared.
 
-```ts eval --hideout
+```ts eval --out=hide
 const fn = () => {
     console.log("hi2");
 };
@@ -27,7 +27,7 @@ const fn = () => {
 
 In the following block, there will be a console blockquote.
 
-```ts eval --hideout
+```ts eval --out=hide
 fn();
 ```
 

@@ -12,7 +12,7 @@ readFile;
 
 Even in environemnts without top level await, it works.
 
-```ts eval --hideout
+```ts eval --out=hide
 const delay = () => new Promise((rs) => setTimeout(rs, 1));
 await delay();
 ```

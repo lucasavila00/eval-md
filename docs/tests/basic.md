@@ -74,7 +74,7 @@ const nothing = (_arg: number) => void 0;
 It prints inlay hints
 
 ````md
-```ts eval --meta --hideout
+```ts eval --meta --out=hide
 const nothing2 = () => nothing(123);
 nothing2();
 ```
@@ -146,7 +146,7 @@ The fenced code block can be hidden
 The output can be hidden
 
 ````md
-```ts eval --meta --hideout
+```ts eval --meta --out=hide
 ({ hide: "me", n: 123 + 456 });
 ```
 ````

@@ -141,7 +141,7 @@ const printBlock: BlockTransformer = (
         RA.sort(LanguageExecutionResultOrd),
         RTE.traverseArray((it) =>
             it._tag == "BlockExecutionResult"
-                ? infoString.flags.includes("hideout")
+                ? printLang === "hide"
                     ? RTE.of(O.none)
                     : transformPrintedValue(
                           it,
