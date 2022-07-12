@@ -3,7 +3,11 @@ module.exports = {
     preset: "ts-jest",
     testEnvironment: "node",
     collectCoverage: false,
-    collectCoverageFrom: ["src/**/*.ts"],
+    collectCoverageFrom: [
+        "src/program/**/*.ts",
+        "src/printers/**/*.ts",
+        "src/md-writer/**/*.ts",
+    ],
     coverageReporters: ["clover", "json", "lcov", "text", "html"],
     // coverageThreshold: {
     //     global: {

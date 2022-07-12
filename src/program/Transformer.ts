@@ -7,6 +7,7 @@ import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as Core from "./Core";
 import * as O from "fp-ts/lib/Option";
 import * as Ord from "fp-ts/lib/Ord";
+import * as TE from "fp-ts/lib/TaskEither";
 
 // -------------------------------------------------------------------------------------
 // models
@@ -28,7 +29,7 @@ export type OutputTransformer = {
     readonly language: InfoString.OutputLanguage;
     readonly print: (
         result: Executor.BlockExecutionResult
-    ) => Core.Program<BlockTransformationResult>;
+    ) => TE.TaskEither<Core.TransportedError, BlockTransformationResult>;
 };
 
 const LanguageExecutionResultOrd: Ord.Ord<Executor.LanguageExecutionResult> = {
@@ -108,12 +109,12 @@ const transformPrintedValue = (
 ): Core.Program<O.Option<BlockTransformationResult>> =>
     pipe(
         RTE.ask<Core.Environment, Core.TransportedError>(),
-        RTE.chain((env) => {
+        RTE.chainTaskEitherKW((env) => {
             const printer = env.outputPrinters.find(
                 (it) => it.language === printLanguage
             );
             if (printer == null) {
-                return RTE.left("Missing printer for output: " + printLanguage);
+                return TE.left("Missing printer for output: " + printLanguage);
             }
             return printer.print(result);
         }),

@@ -243,7 +243,7 @@ some text
             {
                 language: "json" as any,
                 print: (r) =>
-                    RTE.of({
+                    TE.of({
                         content: "content was: " + r.content,
                         infoString: "id-out",
                     }),
@@ -317,7 +317,7 @@ some text
             {
                 language: "id" as any,
                 print: (r) =>
-                    RTE.of({
+                    TE.of({
                         content: "content was: " + r.content,
                         infoString: "id-out",
                     }),

@@ -14,6 +14,10 @@ export type Runner = {
     ) => TE.TaskEither<TransportedError, string>;
 };
 
+export const _spawner = {
+    spawnSync,
+};
+
 // -------------------------------------------------------------------------------------
 // utils
 // -------------------------------------------------------------------------------------
@@ -26,7 +30,7 @@ export const run = (
         TE.fromEither(
             E.tryCatch(
                 () =>
-                    spawnSync(command, args, {
+                    _spawner.spawnSync(command, args, {
                         stdio: "pipe",
                         encoding: "utf8",
                     }),
