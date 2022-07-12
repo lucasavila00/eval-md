@@ -10,16 +10,14 @@ import * as Transformer from "./Transformer";
 import * as Executor from "./Executor";
 import { Logger } from "./Logger";
 import { getDefaultSettings, Settings } from "./Config";
-
 import { Runner } from "./Runner";
+import { TransportedError } from "./Errors";
 
 const CONFIG_FILE_NAME = "eval-md.json";
 
 // -------------------------------------------------------------------------------------
 // model
 // -------------------------------------------------------------------------------------
-
-export type TransportedError = any;
 
 export type Capabilities = {
     readonly fileSystem: FileSystem;
@@ -50,7 +48,7 @@ export const readFile = (path: string): Effect<File> =>
     pipe(
         RTE.ask<Capabilities>(),
         RTE.chainTaskEitherK(({ fileSystem }) => fileSystem.readFile(path)),
-        RTE.map((content) => File(path, content, false))
+        RTE.map((content) => File(path, content))
     );
 
 export const readFiles: (
@@ -68,13 +66,6 @@ export const writeFile = (file: File): Effect<void> => {
         )
     );
 
-    const skip: Effect<void> = pipe(
-        RTE.ask<Capabilities>(),
-        RTE.chainTaskEitherK(({ logger }) =>
-            logger.debug(`File ${file.path} already exists, skipping creation`)
-        )
-    );
-
     const write: Effect<void> = pipe(
         RTE.ask<Capabilities>(),
         RTE.chainTaskEitherK(({ fileSystem }) =>
@@ -87,9 +78,7 @@ export const writeFile = (file: File): Effect<void> => {
         RTE.chain(({ fileSystem }) =>
             RTE.fromTaskEither(fileSystem.exists(file.path))
         ),
-        RTE.chain((exists) =>
-            exists ? (file.overwrite ? overwrite : skip) : write
-        )
+        RTE.chain((exists) => (exists ? overwrite : write))
     );
 };
 
@@ -263,8 +252,7 @@ const getMarkdownFiles = (
                                 env.settings.srcDir,
                                 env.settings.outDir
                             ),
-                            MD.print(content) + (env.settings.footer ?? ""),
-                            true
+                            MD.print(content) + (env.settings.footer ?? "")
                         )
                 )
             );

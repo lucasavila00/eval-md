@@ -106,7 +106,7 @@ if (isMainThread) {
 
         addInlayParameters(sourceFile);
 
-        return File(f.path, sourceFile.getFullText(), f.overwrite);
+        return File(f.path, sourceFile.getFullText());
     });
 
     parentPort?.postMessage(JSON.stringify(newFiles));

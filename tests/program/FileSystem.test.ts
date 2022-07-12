@@ -13,17 +13,15 @@ describe("FileSystem", () => {
     describe("constructors", () => {
         it("File", () => {
             const file1 = _.File("src/test.ts", "test");
-            const file2 = _.File("src/test.ts", "test", true);
+            const file2 = _.File("src/test.ts", "test");
 
             expect(file1).toStrictEqual({
                 path: "src/test.ts",
                 content: "test",
-                overwrite: false,
             });
             expect(file2).toStrictEqual({
                 path: "src/test.ts",
                 content: "test",
-                overwrite: true,
             });
         });
     });

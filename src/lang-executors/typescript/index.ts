@@ -21,6 +21,7 @@ import { TraverseOptions } from "@babel/traverse";
 import { Worker } from "node:worker_threads";
 import * as t from "@babel/types";
 import { getExecFileName } from "./shared";
+import { TransportedError } from "../../program/Errors";
 // -------------------------------------------------------------------------------------
 // model
 // -------------------------------------------------------------------------------------
@@ -208,7 +209,7 @@ const getAnnotatedSourceCode =
                             code.join("\n")
                     ),
                 ].join("\n");
-                return File(ref.file.path, content, false);
+                return File(ref.file.path, content);
             }),
             E.of
         );
@@ -222,9 +223,7 @@ const getExecutableSourceCode = (
     pipe(
         getAnnotatedSourceCode(refs, true),
         RTE.map(
-            RA.map((it) =>
-                File(getExecFileName(it, "exec.ts"), it.content, true)
-            )
+            RA.map((it) => File(getExecFileName(it, "exec.ts"), it.content))
         )
     );
 
@@ -232,7 +231,7 @@ const getIndex = (
     refs: ReadonlyArray<Executor.CompilerInputFile>
 ): Program<File> =>
     pipe(
-        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.ask<Core.Environment, TransportedError>(),
         RTE.map((env) => {
             const imports = refs
                 .map((it) => it.file)
@@ -252,8 +251,7 @@ const getIndex = (
                 path.join(env.settings.srcDir, "__entrypoint.exec.ts"),
                 indexTemplate(
                     `${imports}\nconst generators: GenDef[] = [${generators}];`
-                ),
-                true
+                )
             );
         })
     );
@@ -278,7 +276,7 @@ const toPrint = (
     refs: ReadonlyArray<Executor.CompilerInputFile>
 ): Program<ReadonlyArray<FileBlocks>> =>
     pipe(
-        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.ask<Core.Environment, TransportedError>(),
         RTE.chainFirst(({ logger }) =>
             RTE.fromTaskEither(logger.debug("Processing code with ts-morph..."))
         ),
@@ -376,7 +374,7 @@ const toPrint = (
 
 const spawnTsNode = (): Program<SpawnResult> =>
     pipe(
-        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.ask<Core.Environment, TransportedError>(),
         RTE.chainFirst(({ logger }) =>
             RTE.fromTaskEither(logger.debug("Spawning ts-node..."))
         ),
@@ -415,7 +413,7 @@ const spawnTsNode = (): Program<SpawnResult> =>
 
 const getExec = (refs: ReadonlyArray<Executor.CompilerInputFile>) =>
     pipe(
-        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.ask<Core.Environment, TransportedError>(),
         RTE.chainFirst(({ logger }) =>
             RTE.fromTaskEither(logger.debug("Starting ts-node execution..."))
         ),

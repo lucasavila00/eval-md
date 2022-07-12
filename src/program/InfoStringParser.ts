@@ -1,4 +1,4 @@
-import { absurd, pipe } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/function";
 import * as P from "parser-ts/Parser";
 import * as S from "parser-ts/string";
 import * as O from "fp-ts/lib/Option";
@@ -9,8 +9,8 @@ import * as A from "fp-ts/lib/Array";
 import * as R from "fp-ts/lib/Record";
 import * as MO from "fp-ts/lib/Monoid";
 import * as SM from "fp-ts/lib/Semigroup";
-import { TransportedError } from "./Core";
 import * as t from "io-ts";
+import { TransportedError, EGetOrThrow } from "./Errors";
 
 // -------------------------------------------------------------------------------------
 // model
@@ -126,9 +126,6 @@ const fold =
 
             case "Named":
                 return onNamed(a.name, a.value);
-
-            default:
-                return absurd<R>(a);
         }
     };
 
@@ -212,12 +209,8 @@ export const getLanguage = (infoString: string): O.Option<string> =>
     pipe(
         LanguageP,
         S.run(infoString),
-        E.fold(
-            (e) => {
-                throw e;
-            },
-            (it) => it.value
-        )
+        E.map((it) => it.value),
+        EGetOrThrow
     );
 
 export const isEval = (infoString: string): boolean =>

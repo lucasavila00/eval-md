@@ -7,6 +7,7 @@ import * as RTE from "fp-ts/lib/ReaderTaskEither";
 import * as RA from "fp-ts/lib/ReadonlyArray";
 import * as O from "fp-ts/lib/Option";
 import * as E from "fp-ts/lib/Either";
+import { TransportedError } from "./Errors";
 
 // -------------------------------------------------------------------------------------
 // model
@@ -92,7 +93,7 @@ const compilerInputs = (
 const assertBlockHasCompiler = (
     it: MD.FencedCodeBlock,
     executors: readonly LanguageExecutor[]
-): E.Either<Core.TransportedError, void> =>
+): E.Either<TransportedError, void> =>
     pipe(
         InfoString.getLanguage(it.opener.infoString),
         O.fold(
@@ -113,7 +114,7 @@ const assertAllPrintBlocksHaveCompilers = (
     files: ReadonlyArray<Core.AstAndFile>
 ): Core.Program<void> =>
     pipe(
-        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.ask<Core.Environment, TransportedError>(),
         RTE.chainEitherK((env) =>
             pipe(
                 files,
@@ -135,7 +136,7 @@ export const run = (
     files: ReadonlyArray<Core.AstAndFile>
 ): Core.Program<ReadonlyArray<Execution>> =>
     pipe(
-        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.ask<Core.Environment, TransportedError>(),
         RTE.chainFirst(({ logger }) =>
             RTE.fromTaskEither(logger.debug("Executing code..."))
         ),

@@ -2,7 +2,7 @@ import * as E from "fp-ts/Either";
 import * as TE from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
 import { spawnSync } from "child_process";
-import { TransportedError } from "./Core";
+import { TransportedError } from "./Errors";
 // -------------------------------------------------------------------------------------
 // model
 // -------------------------------------------------------------------------------------

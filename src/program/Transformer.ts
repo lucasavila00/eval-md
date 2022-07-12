@@ -8,6 +8,7 @@ import * as Core from "./Core";
 import * as O from "fp-ts/lib/Option";
 import * as Ord from "fp-ts/lib/Ord";
 import * as TE from "fp-ts/lib/TaskEither";
+import { TransportedError } from "./Errors";
 
 // -------------------------------------------------------------------------------------
 // models
@@ -29,7 +30,7 @@ export type OutputTransformer = {
     readonly language: InfoString.OutputLanguage;
     readonly print: (
         result: Executor.BlockExecutionResult
-    ) => TE.TaskEither<Core.TransportedError, BlockTransformationResult>;
+    ) => TE.TaskEither<TransportedError, BlockTransformationResult>;
 };
 
 const LanguageExecutionResultOrd: Ord.Ord<Executor.LanguageExecutionResult> = {
@@ -108,7 +109,7 @@ const transformPrintedValue = (
     printLanguage: InfoString.OutputLanguage
 ): Core.Program<O.Option<BlockTransformationResult>> =>
     pipe(
-        RTE.ask<Core.Environment, Core.TransportedError>(),
+        RTE.ask<Core.Environment, TransportedError>(),
         RTE.chainTaskEitherKW((env) => {
             const printer = env.outputPrinters.find(
                 (it) => it.language === printLanguage

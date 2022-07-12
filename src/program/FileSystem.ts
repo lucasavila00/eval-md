@@ -42,7 +42,6 @@ export interface FileSystem {
 export interface File {
     readonly path: string;
     readonly content: string;
-    readonly overwrite: boolean;
 }
 
 // -------------------------------------------------------------------------------------
@@ -53,14 +52,9 @@ export interface File {
  * @category constructors
  * @since 0.6.0
  */
-export const File = (
-    path: string,
-    content: string,
-    overwrite = false
-): File => ({
+export const File = (path: string, content: string): File => ({
     path,
     content,
-    overwrite,
 });
 
 // -------------------------------------------------------------------------------------
