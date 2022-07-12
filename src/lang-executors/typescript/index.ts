@@ -144,7 +144,14 @@ const getAnnotatedSourceCode =
                         if (willExecute) {
                             const consoleBlockN = `__consoleBlock = ${index};`;
 
-                            if (outLanguage === "error") {
+                            const isErrorBlock = pipe(
+                                InfoString.parse(block.opener.infoString),
+                                E.fold(
+                                    () => false,
+                                    (it) => it.value.flags.includes("error")
+                                )
+                            );
+                            if (isErrorBlock) {
                                 const out = transformTs(
                                     block.content,
                                     [
@@ -242,7 +249,7 @@ const getIndex = (
                 .join(",");
 
             return File(
-                path.join(env.settings.srcDir, "index.exec.ts"),
+                path.join(env.settings.srcDir, "__entrypoint.exec.ts"),
                 indexTemplate(
                     `${imports}\nconst generators: GenDef[] = [${generators}];`
                 ),
@@ -380,7 +387,7 @@ const spawnTsNode = (): Program<SpawnResult> =>
             const executablePath = path.join(
                 process.cwd(),
                 settings.srcDir,
-                "index.exec.ts"
+                "__entrypoint.exec.ts"
             );
             return Runner.run(command, [executablePath]);
         }),

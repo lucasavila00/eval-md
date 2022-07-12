@@ -1,8 +1,8 @@
 ---
-title: Tests
+title: Examples
 has_children: true
-permalink: /docs/tests
-nav_order: 99
+permalink: /docs/examples
+nav_order: 88
 layout: default
 ---
 

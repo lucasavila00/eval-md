@@ -3,9 +3,9 @@ import { testHeader } from "../ts-utils/test-headers";
 testHeader("Error", __meta.srcUrl + __meta.inputPath, 10);
 ```
 
-Errors can be caught and shown, explicitly. Errors that are thrown but not explictly will stop the markdown generation.
+Errors can be caught and shown, explicitly. Errors that are thrown but not explicitly will stop the markdown generation.
 
-```ts eval --out=error --meta
+```ts eval --error --meta
 throw new Error("def");
 ```
 
@@ -13,7 +13,7 @@ Error blocks are eventually wrapped in a try-catch block, and have scope rules a
 
 We can create a variable with const in an error block...
 
-```ts eval --out=error
+```ts eval --error
 const a = "abc";
 throw new Error(a);
 ```
@@ -27,7 +27,7 @@ a;
 
 And a third time, we can re-create the const.
 
-```ts eval --out=error
+```ts eval --error
 const a = "abc";
 throw new Error(a);
 ```

@@ -71,7 +71,7 @@ By default, values print as json.
 });
 ```
 
-The output language can be overidden
+The output language can be overridden
 
 ```ts eval --out=jsonjs --meta
 ({

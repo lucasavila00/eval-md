@@ -15,7 +15,7 @@ console.info("hi, info");
 console.debug("hi, debug");
 ```
 
-# Capuring calls in functions
+# Capturing calls in functions
 
 Logs are shown in the block they're used, not in the block they're declared.
 

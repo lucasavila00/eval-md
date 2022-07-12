@@ -10,7 +10,7 @@ import { readFile } from "fs";
 readFile;
 ```
 
-Even in environemnts without top level await, it works.
+Even in environments without top level await, it works.
 
 ```ts eval --out=hide
 const delay = () => new Promise((rs) => setTimeout(rs, 1));

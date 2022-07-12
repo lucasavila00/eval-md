@@ -92,6 +92,16 @@ const mainBlock: BlockTransformer = (execBlock, _rawBlock, infoString) =>
               ]
     );
 
+const transformError = (
+    result: Executor.BlockExecutionResult
+): Core.Program<O.Option<BlockTransformationResult>> =>
+    RTE.of(
+        O.some({
+            content: String(result.content),
+            infoString: "js",
+        })
+    );
+
 const transformPrintedValue = (
     result: Executor.BlockExecutionResult,
     printLanguage: InfoString.OutputLanguage
@@ -111,14 +121,13 @@ const transformPrintedValue = (
 
 const transformConsoleValue = (
     result: Executor.ConsoleExecutionResult
-): Core.Program<O.Option<BlockTransformationResult>> => {
-    return RTE.of(
+): Core.Program<O.Option<BlockTransformationResult>> =>
+    RTE.of(
         O.some({
             infoString: "#md#",
-            content: "> " + result.level + " : " + JSON.parse(result.content),
+            content: "> " + result.level + ": " + JSON.parse(result.content),
         })
     );
-};
 const printBlock: BlockTransformer = (
     execBlock,
     _rawBlock,
@@ -143,6 +152,8 @@ const printBlock: BlockTransformer = (
             it._tag == "BlockExecutionResult"
                 ? printLang === "hide"
                     ? RTE.of(O.none)
+                    : infoString.flags.includes("error")
+                    ? transformError(it)
                     : transformPrintedValue(
                           it,
                           printLang ?? InfoString.DefaultOutputLanguage
