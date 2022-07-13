@@ -90,7 +90,8 @@ const importsDeleteVisitor = (imports: string[]): TraverseOptions => ({
         path.remove();
     },
 });
-
+const hoistStartStr = "eval-md-hoisted:";
+const hoistEndStr = ":end-eval-md-hoist";
 const importsToCommentVisitor = (
     imports: string[],
     importMap: Record<string, string>
@@ -103,15 +104,15 @@ const importsToCommentVisitor = (
             }
         });
 
-        const x =
-            generator(path.node)
-                .code.trim()
-                .split("\n")
-                .map((it) => "eval-md-hoisted\n" + it)
-                .join("\n") + "\n";
-
-        path.replaceWith(t.emptyStatement());
-        path.addComment("leading", x);
+        path.replaceWith(
+            t.stringLiteral(
+                hoistStartStr +
+                    Buffer.from(generator(path.node).code.trim()).toString(
+                        "base64"
+                    ) +
+                    hoistEndStr
+            )
+        );
     },
 });
 const transformTs = (
@@ -283,7 +284,26 @@ const getExecutableFilesAndIndex = (
 // -------------------------------------------------------------------------------------
 // source-printer
 // -------------------------------------------------------------------------------------
+const consumeHoistedLine = (line: string, acc: string[]): string[] => {
+    const startIdx = line.indexOf(hoistStartStr);
+    const endIdx = line.indexOf(hoistEndStr);
 
+    const captured = Buffer.from(
+        line.substring(startIdx + hoistStartStr.length, endIdx),
+        "base64"
+    ).toString("ascii");
+
+    const final = line
+        .substring(endIdx + hoistEndStr.length)
+        .trim()
+        .replace('";', "");
+    const newAcc = [...acc, captured];
+    if (final.includes(hoistStartStr) && final.includes(hoistEndStr)) {
+        return consumeHoistedLine(final, newAcc);
+    } else {
+        return [...newAcc, final];
+    }
+};
 type FileBlocks = ReadonlyArray<MD.FencedCodeBlock>;
 
 const toPrint =
@@ -313,7 +333,6 @@ const toPrint =
                           const acc: string[][] = [];
 
                           let skipping = true;
-                          let hoisted = 0;
                           for (const line of lines) {
                               if (line.startsWith("// end-eval-block")) {
                                   skipping = true;
@@ -324,22 +343,16 @@ const toPrint =
                                   skipping = false;
                               }
                               if (!skipping) {
-                                  if (line.startsWith("/*eval-md-hoisted")) {
-                                      hoisted++;
-                                      continue;
+                                  if (
+                                      line.includes(hoistStartStr) &&
+                                      line.includes(hoistEndStr)
+                                  ) {
+                                      acc[acc.length - 1].push(
+                                          ...consumeHoistedLine(line, [])
+                                      );
+                                  } else {
+                                      acc[acc.length - 1].push(line);
                                   }
-
-                                  if (hoisted > 0) {
-                                      if (line.startsWith("*/")) {
-                                          hoisted--;
-                                          acc[acc.length - 1].push(
-                                              line.replace("*/", "")
-                                          );
-                                          continue;
-                                      }
-                                  }
-
-                                  acc[acc.length - 1].push(line);
                               }
                           }
 

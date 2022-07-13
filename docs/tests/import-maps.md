@@ -18,11 +18,16 @@ Check out the [original file](https://github.com/lucasavila00/eval-md/tree/main/
 
 ```ts
 import { text } from "eval-md/lib/md-writer";
+import { Anchor } from "eval-md/lib/md-writer";
+```
+
+```ts
 text(/* listOfStrings: */ "a", "b");
+Anchor(/* text: */ "abc", /* url: */ "def");
 ```
 
 ```json
-"a b"
+"[abc](def)"
 ```
 
 ---
