@@ -155,6 +155,17 @@ The output can be hidden
 ({ hide: "me", n: 123 + 456 });
 ```
 
+It doesn't delete comments
+
+```ts
+// @ts-expect-error
+1 + false;
+```
+
+```json
+1
+```
+
 ---
 
 This document used [eval-md](https://lucasavila00.github.io/eval-md/)

@@ -90,3 +90,10 @@ The output can be hidden
 ```ts eval --meta --out=hide
 ({ hide: "me", n: 123 + 456 });
 ```
+
+It doesn't delete comments
+
+```ts eval
+// @ts-expect-error
+1 + false;
+```

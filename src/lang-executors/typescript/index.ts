@@ -78,6 +78,9 @@ const consumeVisitor = (
                         last.expression,
                     ])
                 );
+                n.innerComments = last.innerComments;
+                n.trailingComments = last.trailingComments;
+                n.leadingComments = last.leadingComments;
                 body[body.length - 1] = n;
             }
         }
