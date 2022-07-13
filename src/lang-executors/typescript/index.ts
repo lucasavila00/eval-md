@@ -115,18 +115,14 @@ const importsToCommentVisitor = (
         );
     },
 });
-const transformTs = (
-    it: string,
-    visitors: TraverseOptions[],
-    comments: boolean
-): string => {
+const transformTs = (it: string, visitors: TraverseOptions[]): string => {
     const ast = parser.parse(it, {
         plugins: ["typescript"],
         sourceType: "module",
     });
     visitors.forEach((visitor) => traverse(ast, visitor));
     const newCode = generator(ast, {
-        comments,
+        comments: true,
         concise: true,
         // retainLines: true,
     }).code;
@@ -163,42 +159,30 @@ const getAnnotatedSourceCode =
                                 )
                             );
                             if (isErrorBlock) {
-                                const out = transformTs(
-                                    block.content,
-                                    [
-                                        consoleVisitor,
-                                        importsDeleteVisitor(imports),
-                                    ],
-                                    false
-                                );
+                                const out = transformTs(block.content, [
+                                    consoleVisitor,
+                                    importsDeleteVisitor(imports),
+                                ]);
 
                                 const try_ = "try {";
                                 const catch_ = `;__dnt=true;}catch(e){__consume("error",${index},e)};if(__dnt){throw new Error('did not throw')}`;
                                 return [consoleBlockN, try_, out, catch_];
                             } else {
-                                const out = transformTs(
-                                    block.content,
-                                    [
-                                        consoleVisitor,
-                                        importsDeleteVisitor(imports),
-                                        consumeVisitor(outLanguage, index),
-                                    ],
-                                    false
-                                );
+                                const out = transformTs(block.content, [
+                                    consoleVisitor,
+                                    importsDeleteVisitor(imports),
+                                    consumeVisitor(outLanguage, index),
+                                ]);
 
                                 return [consoleBlockN, out];
                             }
                         } else {
-                            const out = transformTs(
-                                block.content,
-                                [
-                                    importsToCommentVisitor(
-                                        imports,
-                                        env.settings.imports
-                                    ),
-                                ],
-                                true
-                            );
+                            const out = transformTs(block.content, [
+                                importsToCommentVisitor(
+                                    imports,
+                                    env.settings.imports
+                                ),
+                            ]);
 
                             const opener = JSON.stringify(block.opener);
                             const header = `// start-eval-block ${opener}`;
